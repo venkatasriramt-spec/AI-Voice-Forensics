@@ -1,0 +1,320 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Roboto+Mono:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root, .dark {
+    /* Deep Dark Backgrounds - Cybersecurity Aesthetic */
+    --background: 232 59% 10%; /* #0a0e27 */
+    --background-lighter: 231 56% 13%; /* #0f1535 */
+    --foreground: 210 40% 98%;
+    
+    --card: 231 56% 13%; /* #0f1535 */
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 231 56% 13%;
+    --popover-foreground: 210 40% 98%;
+    
+    /* Enterprise Cybersecurity Palette */
+    --primary: 189 100% 50%; /* Process Cyan #00d9ff */
+    --primary-foreground: 232 59% 10%;
+    
+    --secondary: 217 89% 51%; /* GCP Blue #1A73E8 */
+    --secondary-foreground: 210 40% 98%;
+    
+    --accent: 189 100% 50%;
+    --accent-foreground: 232 59% 10%;
+    
+    --muted: 231 30% 20%;
+    --muted-foreground: 215 20% 65%;
+    
+    --border: 189 100% 50%; /* Base for cyan borders */
+    --input: 231 30% 20%;
+    --ring: 189 100% 50%;
+    
+    /* Specific Requested Colors */
+    --primary-cyan: 189 100% 50%; /* #00d9ff */
+    --success-emerald: 160 84% 39%; /* #10b981 */
+    --danger-red: 0 100% 60%; /* #ff3333 */
+    
+    /* Threat Level Colors (Task 1 Requirements) */
+    --threat-verified: 160 84% 39%; /* Green */
+    --threat-low: 45 100% 60%; /* Light Yellow */
+    --threat-elevated: 24 100% 55%; /* Orange */
+    --threat-high: 0 100% 60%; /* Red */
+    --threat-critical: 0 100% 40%; /* Dark Red */
+    
+    /* Semantic Status Colors */
+    --success: 160 84% 39%;
+    --success-foreground: 232 59% 10%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 232 59% 10%;
+    
+    --danger: 0 100% 60%;
+    --danger-foreground: 210 40% 98%;
+    
+    --critical: 0 100% 60%;
+    --critical-foreground: 210 40% 98%;
+    
+    --destructive: 0 100% 60%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --radius: 0.5rem;
+
+    /* Audio Editor Specific Properties */
+    --waveform-bg: 231 56% 13%;
+    --waveform-selection: 45 100% 50%; /* Yellow selection */
+    --waveform-cursor: 210 40% 98%;
+
+    /* Live Recording & Connection States */
+    --recording-pulse: 0 100% 60%;
+    --connection-active: 160 84% 39%;
+    --connection-inactive: 215 20% 65%;
+    
+    /* Auth overlay styling */
+    --overlay-bg: rgba(10, 14, 39, 0.75);
+    --glass-blur: blur(8px);
+    --auth-primary: 189 100% 50%;
+
+    /* Pipeline Section Properties */
+    --pipeline-step-bg: 189 100% 50%; /* Base HSL for primary-cyan, opacity applied in utilities */
+    --pipeline-step-border: 189 100% 50%;
+    --pipeline-connector: 189 100% 50%;
+  }
+
+  * {
+    @apply border-border/20;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Outfit", system-ui, sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+  }
+  
+  pre, code, .font-mono {
+    font-family: "Roboto Mono", "Courier New", monospace;
+  }
+}
+
+@layer components {
+  /* Decorative Grid Background */
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(to right, hsl(var(--primary-cyan) / 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--primary-cyan) / 0.1) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Threat Filter & Bulk Action UI (Task 1 Requirements) */
+  .filter-container {
+    @apply flex flex-col md:flex-row gap-6 p-5 bg-card/40 border border-border/50 rounded-xl mb-6 items-start md:items-center justify-between shadow-sm backdrop-blur-sm;
+  }
+  
+  .threat-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase tracking-widest border transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0;
+  }
+  
+  .bulk-action-bar {
+    @apply flex items-center justify-between p-3.5 bg-primary/5 border border-primary/20 rounded-lg mb-4 shadow-[0_0_15px_rgba(0,217,255,0.05)];
+  }
+
+  /* Architecture Diagram Utilities */
+  .arch-phase {
+    @apply relative p-6 rounded-2xl border border-primary/20 bg-card/50 backdrop-blur-sm;
+  }
+  
+  .arch-box {
+    @apply p-4 rounded-xl border border-primary/20 bg-background shadow-sm flex flex-col gap-2 transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_15px_rgba(0,217,255,0.1)];
+  }
+
+  .arch-connector {
+    @apply absolute w-0.5 bg-primary/30;
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.15);
+  }
+  
+  .glow-cyan-hover:hover {
+    box-shadow: 0 0 25px rgba(0, 217, 255, 0.3);
+  }
+
+  .text-gradient-cyan {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500;
+  }
+
+  /* Results Dashboard Styles */
+  #waveform {
+    @apply w-full h-[128px] rounded-lg overflow-hidden bg-background/50 border border-border/50 relative mb-4;
+  }
+  
+  #spectrogram {
+    @apply w-full h-[128px] rounded-lg overflow-hidden bg-background/50 border border-border/50 relative;
+  }
+
+  .threat-banner {
+    @apply w-full p-4 rounded-xl font-bold text-center text-lg tracking-wide transition-colors duration-500 text-white shadow-lg mb-8 border border-white/20;
+  }
+
+  .analytics-grid {
+    @apply grid grid-cols-1 lg:grid-cols-2 gap-8;
+  }
+
+  .chart-container {
+    @apply bg-card/50 border border-border/50 rounded-xl p-6 relative min-h-[300px] flex flex-col;
+  }
+
+  .latency-field, .languages-field {
+    @apply bg-card/50 border border-border/50 rounded-xl p-4 mb-4 flex justify-between items-center;
+  }
+
+  .action-report {
+    @apply bg-card/50 border border-border/50 rounded-xl p-6 space-y-3 mt-4;
+  }
+
+  .action-report li {
+    @apply flex items-start gap-3 text-sm text-muted-foreground relative pl-4;
+  }
+  
+  .action-report li::before {
+    content: '';
+    @apply absolute left-0 top-2 w-1.5 h-1.5 rounded-full bg-primary;
+  }
+
+  .loading-spinner {
+    @apply w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4;
+  }
+
+  /* Audio Editor Specific Styles */
+  .audio-time-input {
+    @apply bg-background border border-border/50 rounded-md px-3 py-2 font-mono text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all w-full;
+  }
+  
+  .audio-control-btn {
+    @apply flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200 active:scale-95;
+  }
+
+  /* Legal & Cybersecurity Specific Styles */
+  .legal-card {
+    @apply bg-card/60 backdrop-blur-md border border-border/30 rounded-2xl p-8 transition-all duration-300 hover:border-primary/40 hover:bg-card/80;
+  }
+
+  .alert-box-critical {
+    @apply bg-destructive/10 border-l-4 border-destructive p-6 rounded-r-xl flex items-start gap-4;
+  }
+
+  .alert-box-warning {
+    @apply bg-warning/10 border-l-4 border-warning p-6 rounded-r-xl flex items-start gap-4;
+  }
+
+  .alert-box-info {
+    @apply bg-primary/10 border-l-4 border-primary p-6 rounded-r-xl flex items-start gap-4;
+  }
+
+  /* Pipeline Section Styles */
+  .pipeline-step-card {
+    @apply bg-[hsl(var(--pipeline-step-bg)/0.1)] border border-[hsl(var(--pipeline-step-border)/0.3)] rounded-2xl p-6 md:p-8 transition-all duration-300 hover:bg-[hsl(var(--pipeline-step-bg)/0.15)] hover:border-[hsl(var(--pipeline-step-border)/0.5)] relative z-10;
+  }
+
+  .pipeline-connector {
+    @apply absolute w-0.5 bg-[hsl(var(--pipeline-connector)/0.3)] left-8 md:left-1/2 top-0 bottom-0 -translate-x-1/2 z-0;
+  }
+}
+
+@layer utilities {
+  .text-primary-cyan { color: hsl(var(--primary-cyan)); }
+  .bg-primary-cyan { background-color: hsl(var(--primary-cyan)); }
+  .border-primary-cyan { border-color: hsl(var(--primary-cyan)); }
+
+  .text-success-emerald { color: hsl(var(--success-emerald)); }
+  .bg-success-emerald { background-color: hsl(var(--success-emerald)); }
+  .border-success-emerald { border-color: hsl(var(--success-emerald)); }
+
+  .text-danger-red { color: hsl(var(--danger-red)); }
+  .bg-danger-red { background-color: hsl(var(--danger-red)); }
+  .border-danger-red { border-color: hsl(var(--danger-red)); }
+  
+  .border-cyan-light { border-color: rgba(0, 217, 255, 0.2); }
+  .border-cyan-medium { border-color: rgba(0, 217, 255, 0.5); }
+
+  /* Threat Level Arbitrary Utilities */
+  .text-threat-verified { color: hsl(var(--threat-verified)); }
+  .bg-threat-verified { background-color: hsl(var(--threat-verified)); }
+  .border-threat-verified { border-color: hsl(var(--threat-verified)); }
+
+  .text-threat-low { color: hsl(var(--threat-low)); }
+  .bg-threat-low { background-color: hsl(var(--threat-low)); }
+  .border-threat-low { border-color: hsl(var(--threat-low)); }
+
+  .text-threat-elevated { color: hsl(var(--threat-elevated)); }
+  .bg-threat-elevated { background-color: hsl(var(--threat-elevated)); }
+  .border-threat-elevated { border-color: hsl(var(--threat-elevated)); }
+
+  .text-threat-high { color: hsl(var(--threat-high)); }
+  .bg-threat-high { background-color: hsl(var(--threat-high)); }
+  .border-threat-high { border-color: hsl(var(--threat-high)); }
+
+  .text-threat-critical { color: hsl(var(--threat-critical)); }
+  .bg-threat-critical { background-color: hsl(var(--threat-critical)); }
+  .border-threat-critical { border-color: hsl(var(--threat-critical)); }
+
+  /* Live Recording Animations */
+  .animate-pulse-red {
+    animation: pulse-red 2s infinite;
+  }
+  
+  .animate-blink-dot {
+    animation: blink-dot 1.5s infinite;
+  }
+
+  /* Auth UI utility overlays */
+  .auth-overlay {
+    background: var(--overlay-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+  }
+
+  /* Gradient Text & Entry Animations */
+  .text-gradient-cyan-blue {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary;
+  }
+  
+  .animate-fade-in-up {
+    animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(255, 51, 51, 0.7); }
+  70% { box-shadow: 0 0 0 15px rgba(255, 51, 51, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 51, 51, 0); }
+}
+
+@keyframes blink-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
