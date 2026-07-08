@@ -485,7 +485,7 @@ python live_stream_tester_v8_1.py
 
 ---
 
-## 🖥️ Frontend
+## 💻 Frontend
 
 **Built with:** React · Vite · Tailwind CSS · shadcn/ui · WebSockets · Firebase
 
@@ -611,7 +611,7 @@ Audio-Samples/
 
 ---
 
-## 🛡️ Threat Intelligence Report
+## 🚨 Threat Intelligence Report
 
 Each analysis generates a structured forensic report, returned directly from the `/analyze` endpoint in [`main.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/V_8_1_Cloud_Run_Deployment/main.py):
 
@@ -728,7 +728,7 @@ The live WebSocket endpoint (`/ws/stream`) returns the same `probabilities` / `a
 
 ---
 
-## ⚠️ Notes
+## 📝 Notes
 
 - Version 5 is a production wrapper around Version 4.
 - Version 8.1 is the final production forensic engine.
