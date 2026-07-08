@@ -727,9 +727,6 @@ The live WebSocket endpoint (`/ws/stream`) returns the same `probabilities` / `a
 
 ### 🤝 Built by a Two-Person Team
 
-![Collaboration](https://img.shields.io/badge/Collaboration-Equal%20Partnership-blueviolet)
-![Contributors](https://img.shields.io/badge/Contributors-2-informational)
-
 </div>
 
 <table>
