@@ -1,19 +1,6 @@
 <div align="center">
 
 # 🎙️ Audio Forensics
-### AI for Voice Security
-
-**A production-grade AI system for detecting synthetic speech, voice cloning, and AI-generated voice attacks — in real time.**
-
-![Status](https://img.shields.io/badge/Status-Active-brightgreen)
-![Accuracy](https://img.shields.io/badge/Accuracy-99.84%25-success)
-![Languages](https://img.shields.io/badge/Languages-9-orange)
-![Python](https://img.shields.io/badge/Python-3.10+-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688)
-![React](https://img.shields.io/badge/React-Frontend-61DAFB)
-![PyTorch](https://img.shields.io/badge/PyTorch-WavLM-EE4C2C)
-![GitHub stars](https://img.shields.io/github/stars/venkatasriramt-spec/AI-Voice-Forensics?style=social)
-
 </div>
 
 ---
