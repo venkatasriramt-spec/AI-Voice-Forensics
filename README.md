@@ -52,7 +52,6 @@ The system evolved through **8+ model generations** — moving from spectrogram-
 - [Language Identification (GlotLID)](#-language-identification-glotlid)
 - [Synthetic Voice Generation Pipeline](#-synthetic-voice-generation-pipeline)
 - [Audio Preprocessing](#-audio-preprocessing)
-- [Feature Extraction](#-feature-extraction)
 - [Data Augmentation](#-data-augmentation)
 - [Testing & API Usage](#-testing--api-usage)
 - [Frontend](#-frontend)
