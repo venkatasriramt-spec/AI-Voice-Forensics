@@ -796,15 +796,6 @@ For Academic purpose only.
 
 ---
 
-## 🔗 Links
-
-| Resource | URL |
-|---|---|
-| Repository | https://github.com/venkatasriramt-spec/AI-Voice-Forensics |
-| Backend Demo | https://venkatasriram-audio-forensics-v8-1-demo.hf.space |
-
----
-
 <div align="center">
 
 ### 🏁 Project Summary
