@@ -56,6 +56,7 @@ The system evolved through **8+ model generations** — moving from spectrogram-
 - [Data Augmentation](#-data-augmentation)
 - [Testing & API Usage](#-testing--api-usage)
 - [Frontend](#-frontend)
+- [Audio-Samples](#-audio-samples)
 - [Threat Intelligence Report](#-threat-intelligence-report)
 - [Performance](#-performance)
 - [Technology Stack](#-technology-stack)
@@ -576,6 +577,40 @@ The platform relies on **three** Firebase services, all initialized in [`AuthCon
 | 🗂️ **Storage** | Persisting uploaded audio files tied to a user's account |
 
 > Before deploying, enable **Authentication** (Email/Password + Google providers), **Firestore**, and **Storage** for your project in the Firebase Console — otherwise the corresponding features will fail silently in production.
+
+---
+
+## 🎧 Audio-Samples
+
+A curated set of real and synthetic voice clips, kept in the repo at [`Audio-Samples/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Audio-Samples) for quick manual testing and demoing — separate from the full 27.4GB training archive described above.
+
+```text
+Audio-Samples/
+├── Fake/
+│   ├── ChatGPT/        130 clips — 13 OpenAI TTS voices (alloy, ash, ballad, cedar, coral,
+│   │                    echo, fable, marin, nova, onyx, sage, shimmer, verse), 10 clips each
+│   ├── ElevenLabs/      32 clips — v2 and v3 generations, not split by version
+│   ├── Hume AI/         5 clips
+│   ├── Voicemaker/      2 clips
+│   └── *(root files)*   11 clips of unconfirmed model origin
+├── Real/                21 clips — Common Voice multilingual samples + personal recordings
+├── Real+Fake/           4 clips — hybrid real/fake pairs for edge-case testing
+└── *(root files)*       4 miscellaneous, non-voice test clips
+```
+
+| Category | Files | Notes |
+|---|---|---|
+| `Fake/ChatGPT/` | 130 | 13 OpenAI TTS voices, 10 clips each |
+| `Fake/ElevenLabs/` | 32 | v2 + v3 mixed |
+| `Fake/Hume AI/` | 5 | |
+| `Fake/Voicemaker/` | 2 | |
+| `Fake/` (root) | 11 | Model of origin unknown |
+| `Real/` | 21 | Common Voice + personal recordings |
+| `Real+Fake/` | 4 | Hybrid clips for edge-case testing |
+| `Audio-Samples/` (root) | 4 | Uncategorized, non-voice test clips |
+| **Total** | **209** | ~131 MB |
+
+> ⚠️ **Known limitation:** A handful of clips in `Fake/` couldn't be confidently attributed to a specific AI voice model, so they're kept at the folder root instead of being sorted into a model subfolder. `ElevenLabs/` similarly mixes v2 and v3 outputs together rather than splitting them by version. The 4 loose files at the root of `Audio-Samples/` (ambient air-noise recordings and a game soundtrack clip) aren't voice samples at all — they're kept only as miscellaneous test audio and can be ignored for forensic testing purposes.
 
 ---
 
