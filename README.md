@@ -62,7 +62,6 @@ The system evolved through **8+ model generations** — moving from spectrogram-
 - [Notes](#-notes)
 - [Contributors](#-contributors)
 - [License](#-license)
-- [Links](#-links)
 
 ---
 
