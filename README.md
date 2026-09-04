@@ -52,17 +52,17 @@ The system evolved through **8+ model generations** — moving from spectrogram-
 
 ## 🚀 Live Deployments
 
-### Google Cloud Run — *Primary Production Deployment (archived)*
+### Google Cloud Run — *Self-Hosted Deployment*
 
-```
-https://threat-engine-v8-810126162948.us-central1.run.app/
-```
+The Cloud Run deployment is no longer hosted publicly (the service was stopped to avoid continuous billing). You can deploy it yourself using the deployment files in the respective directories:
 
-**Stack:** Docker · FastAPI · PyTorch · WavLM · Whisper · LightGBM · Google Cloud Container Registry
+**V8 Deployment:** [`Backend/V_8_Production/V_8_Cloud_Run_Deployment/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/V_8_Production/V_8_Cloud_Run_Deployment) — Contains `Dockerfile`, `main.py`, `requirements.txt`, and `v8_xgboost_wavlm.json` (XGBoost model)
 
-📄 **Code:** [`Dockerfile`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/V_8_1_Cloud_Run_Deployment/Dockerfile) · [`main.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/V_8_1_Cloud_Run_Deployment/main.py) · [`requirements.txt`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/V_8_1_Cloud_Run_Deployment/requirements.txt)
+**V8.1 Deployment:** [`Backend/V_8_1_Production/V_8_1_Cloud_Run_Deployment/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/V_8_1_Production/V_8_1_Cloud_Run_Deployment) — Contains `Dockerfile`, `main.py`, `requirements.txt`, and `v8_1_lightgbm.txt` (LightGBM model)
 
-> Cloud Run was used because the full infrastructure lived inside Google Cloud. After validation, the service was stopped to avoid continuous billing.
+**Stack:** Docker · FastAPI · PyTorch · WavLM · Whisper · LightGBM/XGBoost · Google Cloud Container Registry
+
+> To deploy: Build the Docker image and push to Google Cloud Container Registry, then deploy to Cloud Run. The `main.py` in each directory provides the FastAPI inference API with threat scoring.
 
 ### Hugging Face Spaces — *Current Public Backend*
 
@@ -98,7 +98,7 @@ flowchart LR
 
 **Pipeline at a glance:** `Audio Input → REST/WebSocket → Validation → Preprocessing → WavLM + LFCC → Feature Fusion → LightGBM → Threat Report`
 
-📄 **Implementation:** [`v8_1_extract.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/v8_1_extract.py) (WavLM + LFCC feature fusion) · [`v8_1_train.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/v8_1_train.py) (LightGBM training) · [`main.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/V_8_1_Cloud_Run_Deployment/main.py) (FastAPI inference + threat scoring)
+📄 **Implementation:** [`v8_1_extract.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/v8_1_extract.py) (WavLM + LFCC feature fusion) · [`v8_1_train.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/v8_1_train.py) (LightGBM training) · [`main.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/V_8_1_Cloud_Run_Deployment/main.py) (FastAPI inference + threat scoring) · [`v8_extract.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_Production/v8_extract.py) (WavLM feature extraction) · [`v8_train.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_Production/v8_train.py) (XGBoost training) · [`main.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_Production/V_8_Cloud_Run_Deployment/main.py) (V8 FastAPI inference)
 
 ---
 
@@ -123,13 +123,13 @@ timeline
 
 | Version | Architecture | Highlights | Code |
 |---|---|---|---|
-| **V1** | CRNN + Mel Spectrogram | Baseline; limited generalization, noise-sensitive | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) |
-| **V2** | Augmented CRNN | Added noise injection, time/frequency masking | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) |
-| **V3** | Hybrid CRNN | Improved augmentation strategy and generalization | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) |
-| **V4** | Wav2Vec2 + XGBoost | Major shift to transformer embeddings + Whisper | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) |
-| **V5** | Production Wrapper | FastAPI, ONNX inference, static + WebSocket API | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) |
-| **V6** | Wav2Vec2 + LFCC + XGBoost | Added phase analysis, better artifact detection | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) |
-| **V7** | Siamese WavLM | WavLM encoder, pair-based similarity training | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) |
+| **V1** | CRNN + Mel Spectrogram | Baseline; limited generalization, noise-sensitive | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) |
+| **V2** | Augmented CRNN | Added noise injection, time/frequency masking | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) |
+| **V3** | Hybrid CRNN | Improved augmentation strategy and generalization | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) |
+| **V4** | Wav2Vec2 + XGBoost | Major shift to transformer embeddings + Whisper | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) |
+| **V5** | Production Wrapper | FastAPI, ONNX inference, static + WebSocket API | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) |
+| **V6** | Wav2Vec2 + LFCC + XGBoost | Added phase analysis, better artifact detection | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) |
+| **V7** | Siamese WavLM | WavLM encoder, pair-based similarity training | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) |
 | **V8** | WavLM DNA + XGBoost | Clip-level cached embeddings, efficient inference | [train.py](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_Production/v8_train.py) · [extract.py](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_Production/v8_extract.py) |
 | **V8.1** | WavLM + LFCC + LightGBM | **Final production engine — 99.84% accuracy** | [train.py](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/v8_1_train.py) · [extract.py](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/v8_1_extract.py) · [main.py](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/V_8_1_Cloud_Run_Deployment/main.py) |
 
@@ -141,55 +141,55 @@ timeline
 Initial baseline using spectrogram-based deep learning.
 - **Limitations:** Limited generalization · sensitive to noise
 - **Disadvantage:** Spectrogram-only input made the model brittle to background noise and unable to generalize beyond its training distribution.
-- **Code:** [`untitled.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) — *"CRNN Original Brain (Version 1)"* section
+- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"CRNN Original Brain (Version 1)"* section
 
 #### V2 — Augmented CRNN
 Improved on V1 by introducing data augmentation to the training pipeline.
 - **Added:** Noise injection · Time masking · Frequency masking
 - **Result:** Improved robustness over the V1 baseline
 - **Disadvantage:** Augmentation improved noise tolerance but the underlying CRNN backbone still capped overall detection quality.
-- **Code:** [`untitled.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) — *"Model Version 2"* section
+- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"Model Version 2"* section
 
 #### V3 — Hybrid CRNN
 Refined the augmentation strategy further.
 - **Result:** Improved generalization and a more stable hybrid CRNN design
 - **Disadvantage:** Still spectrogram-bound, so cross-language and unseen-TTS-engine generalization remained a bottleneck.
-- **Code:** [`untitled.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) — *"Training Model Version 3"* section
+- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"Training Model Version 3"* section
 
 #### V4 — Wav2Vec2 + XGBoost
 A major architectural shift away from spectrograms and into transformer-based speech embeddings.
 - **Added:** Wav2Vec2 transformer features · Whisper language support · XGBoost classifier
 - **Result:** Significant jump in detection quality by moving to learned speech representations
 - **Disadvantage:** Loading the full PyTorch transformer at inference made the model too slow and heavy for real-time use.
-- **Code:** [`untitled.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) — *"Model Version 4 Training"* section
+- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"Model Version 4 Training"* section
 
 #### V5 — Production Wrapper
 Converted the V4 research model into deployable, production-ready infrastructure (a wrapper around V4, not a new model).
 - **Added:** FastAPI service layer · ONNX inference · Static analysis API · WebSocket streaming
 - **Result:** First version capable of being deployed and queried as a real service
 - **Disadvantage:** Purely a deployment/optimization wrapper around V4 — it improved latency and serving, not raw detection accuracy.
-- **Code:** [`untitled.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) — *"Model Version 5"* section
+- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"Model Version 5"* section
 
 #### V6 — Wav2Vec2 + LFCC + XGBoost
 Introduced signal-processing forensic features alongside the transformer embeddings.
 - **Added:** LFCC (Linear Frequency Cepstral Coefficients) features · Phase analysis
 - **Result:** Better artifact detection by combining learned and hand-engineered forensic signals
 - **Disadvantage:** Extracting LFCCs alongside Wav2Vec2 embeddings added extra compute overhead per inference call.
-- **Code:** [`untitled.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) — *"Version 6 Testing"* section
+- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"Version 6 Testing"* section
 
 #### V7 — Siamese WavLM
 Introduced similarity-learning to compare voice samples directly.
 - **Added:** WavLM encoder (replacing Wav2Vec2) · Pair-based Siamese training · Embedding comparison
 - **Result:** Enabled the system to learn relative similarity between genuine and synthetic voices, not just absolute classification
 - **Disadvantage:** Pair-based similarity training is more complex and slower to train than direct classification approaches.
-- **Code:** [`untitled.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb) — *"Version 7 Testing"* section
+- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"Version 7 Testing"* section
 
 #### V8 — WavLM DNA + XGBoost
 A production-optimization pass focused on inference efficiency.
 - **Added:** Clip-level WavLM embeddings · Embedding caching · More efficient inference pipeline
 - **Result:** Faster, more scalable inference without sacrificing the V7 detection gains
 - **Disadvantage:** XGBoost inference was comparatively slower and heavier than the LightGBM classifier later adopted in V8.1.
-- **Code:** [`v8_train.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_Production/v8_train.py) · [`v8_extract.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_Production/v8_extract.py) · [`v8_xgboost_wavlm.json`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_Production/v8_xgboost_wavlm.json)
+- **Code:** [`v8_train.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_Production/v8_train.py) · [`v8_extract.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_Production/v8_extract.py) · [`v8_xgboost_wavlm.json`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_Production/V_8_Cloud_Run_Deployment/v8_xgboost_wavlm.json) · [`Cloud Run Deployment`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/V_8_Production/V_8_Cloud_Run_Deployment)
 
 #### V8.1 — WavLM + LFCC + LightGBM *(Final Production Engine)*
 The final, fused architecture combining transformer embeddings with forensic signal features under a lighter, faster classifier.
@@ -197,7 +197,7 @@ The final, fused architecture combining transformer embeddings with forensic sig
 - **Added:** LightGBM meta-classifier (replacing XGBoost) for faster inference · Optimized LFCC feature extraction
 - **Result:** **99.84% accuracy** — the current production forensic engine powering both the static and real-time APIs
 - **Disadvantage:** Running both the WavLM encoder and LFCC extraction per audio chunk still adds more compute than a single-branch model.
-- **Code:** [`v8_1_train.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/v8_1_train.py) · [`v8_1_extract.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/v8_1_extract.py) · [`main.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/V_8_1_Cloud_Run_Deployment/main.py) (production inference API)
+- **Code:** [`v8_1_train.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/v8_1_train.py) · [`v8_1_extract.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/v8_1_extract.py) · [`main.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/V_8_1_Production/V_8_1_Cloud_Run_Deployment/main.py) (production inference API) · [`Cloud Run Deployment`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/V_8_1_Production/V_8_1_Cloud_Run_Deployment)
 
 ---
 
@@ -208,7 +208,7 @@ The complete Audio Forensics package (**27.4GB**) contains all major development
 - 🧠 8 iterative model generations (V1 → V8.1)
 - 🎙️ Raw real and synthetic audio datasets
 - 🧪 Training and evaluation scripts ([`Backend/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend) · [`Data Preprocessing/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Data%20Preprocessing))
-- 📓 Primary research and experimentation notebooks ([`untitled.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/untitled.ipynb))
+- 📓 Primary research and experimentation notebooks ([`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb))
 
 The complete archive is available here:
 
