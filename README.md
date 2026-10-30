@@ -1,19 +1,9 @@
 <div align="center">
 
 # 🎙️ AI Voice Forensics
-### Detecting Synthetic Speech & AI Voice Clones Across 9 Languages
-
-<p align="center">
-  <b>Authors:</b> 
-  <a href="https://github.com/venkatasriramt-spec"><b>Venkata Sriram Topalli</b></a> &amp; 
-  <a href="https://github.com/AYUSHMSINGH2004"><b>Ayush M Singh</b></a>
-</p>
-
-[Live Web Demo](https://venkatasriram-audio-forensics-v8-1-demo.hf.space) • [Dataset & Models](https://archive.org/details/ai-voice-forensics-dataset) • [System Architecture](#-system-architecture) • [Backend Versions](#-backend-engines-v3--v81) • [API Usage](#-testing--api-usage)
 
 </div>
 
----
 
 ## 📖 Project Overview
 
