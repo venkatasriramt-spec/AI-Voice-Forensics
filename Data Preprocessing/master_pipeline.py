@@ -31,10 +31,15 @@ from TTS.api import TTS
 # --- Auto-accept Coqui XTTS Terms of Service ---
 os.environ["COQUI_TOS_AGREED"] = "1"
 
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BASE_DIR.parent
+
 # --- Configurations ---
 OLD_BUCKET = "gs://mozilla-voice-data-lake-2026/real_voices_backup_compressed"
 NEW_BUCKET = "gs://processed-voice-data-lake-2026"
-LOCAL_EXTRACT_DIR = "./temp_extract"
+TEMP_DIR = REPO_ROOT / "data" / "temp"
+LOCAL_EXTRACT_DIR = str(TEMP_DIR / "temp_extract")
 XTTS_SPEAKER = "Ana Florence" 
 
 LANGUAGES = {
@@ -140,7 +145,8 @@ async def generate_edge_tts(text, voice, output_path):
                 raise e
 
 def generate_fake_audio(valid_sentences, lang_name, lang_info):
-    os.makedirs("temp_fakes", exist_ok=True)
+    temp_fakes_dir = TEMP_DIR / "temp_fakes"
+    temp_fakes_dir.mkdir(parents=True, exist_ok=True)
     engine = lang_info['engine']
     
     print(f"  -> [FOREGROUND TASK STARTED] Generating {len(valid_sentences)} Fake Audio clips using {engine.upper()}...")
@@ -153,7 +159,7 @@ def generate_fake_audio(valid_sentences, lang_name, lang_info):
     for i, sentence in enumerate(valid_sentences):
         file_ext = "mp3" if engine == 'edge' else "wav"
         file_name = f"fake_{lang_name.lower()}_{engine}_{i+1}.{file_ext}"
-        local_path = os.path.join("temp_fakes", file_name)
+        local_path = str(temp_fakes_dir / file_name)
         
         if engine == 'xtts':
             xtts_model.tts_to_file(

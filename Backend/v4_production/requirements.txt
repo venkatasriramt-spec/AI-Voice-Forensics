@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+python-multipart
+librosa
+numpy
+xgboost
+onnxruntime-gpu
+torch
+transformers
+openai-whisper

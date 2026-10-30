@@ -12,10 +12,18 @@ from tqdm import tqdm
 # ==========================================
 # 1. LOAD EMBEDDINGS INTO MEMORY
 # ==========================================
-CACHE_DIR_REAL = "wavlm_dna_cache/real"
-CACHE_DIR_FAKE = "wavlm_dna_cache/fake"
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BASE_DIR.parents[1]
 
-print("⏳ Loading Pre-Computed WavLM Vectors into Memory...")
+CACHE_DIR = REPO_ROOT / "cache" / "v8_wavlm_dna_cache"
+if not CACHE_DIR.exists():
+    CACHE_DIR = REPO_ROOT / "wavlm_dna_cache"
+
+CACHE_DIR_REAL = CACHE_DIR / "real"
+CACHE_DIR_FAKE = CACHE_DIR / "fake"
+
+print(f"⏳ Loading Pre-Computed WavLM Vectors into Memory from {CACHE_DIR}...")
 
 X_data = []
 y_labels = []
@@ -103,11 +111,16 @@ plt.legend()
 plt.tight_layout()
 
 # Save the plots to a file instead of displaying them (Crucial for Tmux/Headless Servers)
-plot_path = "v8_production/v8_evaluation_plots.png"
+plot_path = str(BASE_DIR / "v8_evaluation_plots.png")
 plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 print(f"✅ Plots successfully rendered and saved to: {plot_path}")
 
 # Save the actual XGBoost Model
-model_path = "v8_production/v8_xgboost_wavlm.json"
+model_path = str(BASE_DIR / "v8_xgboost_wavlm.json")
 xgb_classifier.save_model(model_path)
 print(f"✅ Model successfully saved to: {model_path}")
+
+deploy_model_path = BASE_DIR / "v8_cloud_run_deployment" / "v8_xgboost_wavlm.json"
+if deploy_model_path.parent.exists():
+    xgb_classifier.save_model(str(deploy_model_path))
+    print(f"✅ Model also deployed to: {deploy_model_path}")

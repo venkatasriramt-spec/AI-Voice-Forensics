@@ -12,10 +12,18 @@ from tqdm import tqdm
 # ==========================================
 # 1. LOAD SUPER-VECTORS INTO MEMORY
 # ==========================================
-CACHE_DIR_REAL = "v8_1_dna_cache/real"
-CACHE_DIR_FAKE = "v8_1_dna_cache/fake"
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BASE_DIR.parents[1]
 
-print("⏳ Loading Pre-Computed V8.1 Super-Vectors (WavLM + LFCC)...")
+CACHE_DIR = REPO_ROOT / "cache" / "v8_1_fused_dna_cache"
+if not CACHE_DIR.exists():
+    CACHE_DIR = REPO_ROOT / "v8_1_dna_cache"
+
+CACHE_DIR_REAL = CACHE_DIR / "real"
+CACHE_DIR_FAKE = CACHE_DIR / "fake"
+
+print(f"⏳ Loading Pre-Computed V8.1 Super-Vectors (WavLM + LFCC) from {CACHE_DIR}...")
 
 X_data = []
 y_labels = []
@@ -98,11 +106,17 @@ plt.legend()
 plt.tight_layout()
 
 # Save output safely for Headless Server
-plot_path = "v8_1_production/v8_1_evaluation_plots.png"
+plot_path = str(BASE_DIR / "v8_1_evaluation_plots.png")
 plt.savefig(plot_path, dpi=300, bbox_inches='tight')
 print(f"✅ Plots rendered and saved to: {plot_path}")
 
 # Save LightGBM Model
-model_path = "v8_1_production/v8_1_lightgbm.txt"
+model_path = str(BASE_DIR / "v8_1_lightgbm.txt")
 lgb_classifier.booster_.save_model(model_path)
 print(f"✅ Model successfully saved to: {model_path}")
+
+for deploy_dir in ["v8_1_cloud_run_deployment", "v8_1_hugging_face_deployment"]:
+    target = BASE_DIR / deploy_dir / "v8_1_lightgbm.txt"
+    if target.parent.exists():
+        lgb_classifier.booster_.save_model(str(target))
+        print(f"✅ Model also deployed to: {target}")

@@ -10,13 +10,18 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BASE_DIR.parents[1]
+
 # ==========================================
 # 1. SETUP DIRECTORIES & CACHE
 # ==========================================
-CACHE_DIR_REAL = "wavlm_dna_cache/real"
-CACHE_DIR_FAKE = "wavlm_dna_cache/fake"
-os.makedirs(CACHE_DIR_REAL, exist_ok=True)
-os.makedirs(CACHE_DIR_FAKE, exist_ok=True)
+CACHE_DIR = REPO_ROOT / "cache" / "v8_wavlm_dna_cache"
+CACHE_DIR_REAL = CACHE_DIR / "real"
+CACHE_DIR_FAKE = CACHE_DIR / "fake"
+CACHE_DIR_REAL.mkdir(parents=True, exist_ok=True)
+CACHE_DIR_FAKE.mkdir(parents=True, exist_ok=True)
 
 print("⏳ Loading Frozen WavLM Engine...")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -29,12 +34,26 @@ model.eval() # Freeze the model
 # ==========================================
 print("🔍 Scanning directories for all available audio...")
 
-real_paths = glob.glob("local_data/**/Real Audio/*.wav", recursive=True)
+BASE_CORPUS = REPO_ROOT / "data" / "multilingual_base_corpus"
+if not BASE_CORPUS.exists():
+    BASE_CORPUS = REPO_ROOT / "local_data"
+
+real_paths = glob.glob(f"{BASE_CORPUS}/**/Real Audio/*.wav", recursive=True)
 
 fake_paths = []
-fake_paths.extend(glob.glob("local_data/**/Fake Audio/*.wav", recursive=True))
-fake_paths.extend(glob.glob("local_data_v6_fakes/**/*.wav", recursive=True))
-fake_paths.extend(glob.glob("synthetic_booster_pack/**/*.wav", recursive=True))
+fake_paths.extend(glob.glob(f"{BASE_CORPUS}/**/Fake Audio/*.wav", recursive=True))
+
+EL_DIR = REPO_ROOT / "data" / "elevenlabs_v3_synthetic_speech"
+if not EL_DIR.exists():
+    EL_DIR = REPO_ROOT / "local_data_v6_fakes"
+fake_paths.extend(glob.glob(f"{EL_DIR}/**/*.wav", recursive=True))
+
+BOOSTER_DIR = REPO_ROOT / "data" / "openai_gcp_booster_pack"
+if not BOOSTER_DIR.exists():
+    BOOSTER_DIR = REPO_ROOT / "data" / "synthetic_booster_pack"
+if not BOOSTER_DIR.exists():
+    BOOSTER_DIR = REPO_ROOT / "synthetic_booster_pack"
+fake_paths.extend(glob.glob(f"{BOOSTER_DIR}/**/*.wav", recursive=True))
 
 print(f"✅ Found {len(real_paths)} Authentic Human clips.")
 print(f"✅ Found {len(fake_paths)} Synthetic AI clips.")

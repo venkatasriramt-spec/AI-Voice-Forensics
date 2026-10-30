@@ -32,14 +32,18 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BASE_DIR.parent
+
 # --- 1. SETUP & AUTHENTICATION ---
 # Set your OpenAI API Key here
 os.environ["OPENAI_API_KEY"] = "YOUR_OPENAI_API_KEY" 
 client = OpenAI()
 gcp_client = texttospeech.TextToSpeechClient()
 
-output_dir = "./synthetic_booster_pack"
-os.makedirs(output_dir, exist_ok=True)
+output_dir = REPO_ROOT / "data" / "openai_gcp_booster_pack"
+output_dir.mkdir(parents=True, exist_ok=True)
 
 # --- 2. LANGUAGE MAPPING & RULES ---
 # 1. Map the short codes to the Google Cloud voices
@@ -69,15 +73,23 @@ openai_languages = ['en', 'fr', 'es', 'de', 'zh-CN', 'ca'] # No Bengali
 
 # --- 3. LOAD DATASET ---
 print("Loading dataset...")
-df = pd.read_csv("synthetic_booster_validated_sentences.csv")
+csv_path = BASE_DIR / "booster_seed_sentences.csv"
+if not csv_path.exists():
+    csv_path = BASE_DIR / "synthetic_booster_validated_sentences.csv"
+if not csv_path.exists():
+    csv_path = REPO_ROOT / "synthetic_booster_validated_sentences.csv"
+
+df = pd.read_csv(str(csv_path))
 col_lang = 'Language'     
 col_text = 'Sentence'   
 
 # --- 4. THE AUGMENTATION ENGINE ---
 def save_with_noise(raw_audio_content, filename):
     """Saves raw API bytes to disk, adds white noise, and resaves as a clean .wav"""
-    temp_path = f"temp_{filename}"
-    final_path = os.path.join(output_dir, filename)
+    temp_dir = REPO_ROOT / "data" / "temp"
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    temp_path = str(temp_dir / f"temp_{filename}")
+    final_path = str(output_dir / filename)
     
     with open(temp_path, "wb") as out:
         out.write(raw_audio_content)
@@ -89,7 +101,8 @@ def save_with_noise(raw_audio_content, filename):
     y_noisy = y + noise_amp * np.random.normal(size=y.shape[0])
     
     sf.write(final_path, y_noisy, sr)
-    os.remove(temp_path)
+    if os.path.exists(temp_path):
+        os.remove(temp_path)
 
 # --- 5. API GENERATORS ---
 def generate_gcp(text, lang_code, index):

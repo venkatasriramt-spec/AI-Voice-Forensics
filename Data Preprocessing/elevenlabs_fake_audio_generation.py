@@ -17,11 +17,20 @@ el_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
 TARGET_CLIP_COUNT = 1100  # The new hard limit per language
 
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+REPO_ROOT = BASE_DIR.parent
+
 # ---------------------------------------------------------
 # 2. Folder Setup & Language Routing
 # ---------------------------------------------------------
-SOURCE_DIR = "local_data"
-TARGET_DIR = "local_data_v6_fakes"
+SOURCE_DIR = REPO_ROOT / "data" / "multilingual_base_corpus"
+if not SOURCE_DIR.exists():
+    SOURCE_DIR = REPO_ROOT / "local_data"
+
+TARGET_DIR = REPO_ROOT / "data" / "elevenlabs_v3_synthetic_speech"
+if not TARGET_DIR.exists() and (REPO_ROOT / "local_data_v6_fakes").exists():
+    TARGET_DIR = REPO_ROOT / "local_data_v6_fakes"
 
 LANGS_ASSEMBLY = ["English", "German", "French", "Spanish", "Chinese","Catalan"]    #  temporarily exculded
 LANGS_WHISPER = ["Bengali"]
