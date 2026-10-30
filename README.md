@@ -1,50 +1,54 @@
 <div align="center">
 
-# 🎙️ Audio Forensics
+# 🎙️ AI Voice Forensics
+### Detecting Synthetic Speech & AI Voice Clones Across 9 Languages
+
+<p align="center">
+  <b>Authors:</b> 
+  <a href="https://github.com/venkatasriramt-spec"><b>Venkata Sriram Topalli</b></a> &amp; 
+  <a href="https://github.com/AYUSHMSINGH2004"><b>Ayush M Singh</b></a>
+</p>
+
+[Live Web Demo](https://venkatasriram-audio-forensics-v8-1-demo.hf.space) • [Dataset & Models](https://archive.org/details/ai-voice-forensics-dataset) • [System Architecture](#-system-architecture) • [Backend Versions](#-backend-engines-v3--v81) • [API Usage](#-testing--api-usage)
+
 </div>
 
-## 📖 Overview
+---
 
-**Audio Forensics** is an AI-powered voice security platform built to detect synthetic speech, AI-generated voices, and voice cloning attacks.
+## 📖 Project Overview
 
-The system evolved through **8+ model generations** — moving from spectrogram-based deep learning to a production forensic engine that fuses:
+**AI Voice Forensics** is an audio analysis project developed to detect synthetic speech, AI-generated voices, and deepfake audio.
 
-- 🧬 Transformer speech representations
-- 🔬 Signal-processing forensic features
-- 🧩 Siamese similarity learning
-- 🌲 Ensemble machine learning
-- ⚡ Real-time WebSocket inference
+Modern neural text-to-speech (TTS) engines (such as ElevenLabs v3, OpenAI TTS, and Meta MMS) produce high-fidelity audio that is difficult for simple spectrogram models to distinguish from natural human speech. This repository documents our exploration across **8 iterative model generations** — moving from basic spectrogram-based convolutional-recurrent networks to a dual-branch pipeline that combines:
 
-### Key Capabilities
+- 🧬 **Pretrained Transformer Speech Representations:** WavLM Large contextual embeddings (768-D).
+- 🔬 **Signal-Processing Acoustic Features:** Linear Frequency Cepstral Coefficients (LFCC, 80-D) to capture spectral and phase transitions typical of vocoders.
+- 🌲 **Gradient-Boosted Classifier:** A LightGBM classifier operating on the concatenated 848-D feature vector.
+- ⚡ **Dual Serving Modes:** Static file analysis via REST API and live audio chunk evaluation via WebSockets.
 
-| Capability | Description |
-|---|---|
-| ✅ Static Forensic Analysis | Deep analysis of uploaded audio recordings |
-| ✅ Real-Time Interception | Live voice stream monitoring via WebSocket |
-| ✅ AI Speech Detection | Identifies AI-generated and cloned voices |
-| ✅ Threat Scoring | Quantified risk assessment per analysis |
-| ✅ Automated Forensic Reports | Structured, actionable security output |
+Across an evaluation set of 14,671 audio recordings across 9 languages, the final V8.1 pipeline achieved **99.84% test accuracy** (23 misclassifications).
 
 ---
 
 ## 📑 Table of Contents
 
 - [Live Deployments](#-live-deployments)
+- [Repository Structure](#-repository-structure)
 - [System Architecture](#-system-architecture)
-- [Model Evolution](#-model-evolution)
-- [Dataset & Model Download](#-dataset--model-download)
-- [Dataset Intelligence](#-dataset-intelligence)
+- [Backend Engines (V3 – V8.1)](#-backend-engines-v3--v81)
+- [Model Evolution & Benchmarks](#-model-evolution--benchmarks)
+- [Model Training & Feature Extraction](#-model-training--feature-extraction)
+- [Dataset & Model Downloads (Internet Archive)](#-dataset--model-downloads-internet-archive)
+- [Dataset Intelligence & Mozilla Data Collective](#-dataset-intelligence--mozilla-data-collective)
 - [Language Identification (GlotLID)](#-language-identification-glotlid)
-- [Synthetic Voice Generation Pipeline](#-synthetic-voice-generation-pipeline)
-- [Audio Preprocessing](#-audio-preprocessing)
+- [Synthetic Voice Generation Pipelines](#-synthetic-voice-generation-pipelines)
+- [Audio Preprocessing & Augmentation](#-audio-preprocessing--augmentation)
 - [Testing & API Usage](#-testing--api-usage)
-- [Frontend](#-frontend)
-- [Audio-Samples](#-audio-samples)
-- [Threat Intelligence Report](#-threat-intelligence-report)
-- [Performance](#-performance)
+- [Frontend Web Application](#-frontend-web-application)
+- [Curated Test Audio Samples](#-curated-test-audio-samples)
+- [Risk Scoring & Output Format](#-risk-scoring--output-format)
 - [Technology Stack](#-technology-stack)
-- [Security Practices](#-security-practices)
-- [Notes](#-notes)
+- [Project Notes & Limitations](#-project-notes--limitations)
 - [Contributors](#-contributors)
 - [License](#-license)
 
@@ -52,672 +56,613 @@ The system evolved through **8+ model generations** — moving from spectrogram-
 
 ## 🚀 Live Deployments
 
-### Google Cloud Run — *Self-Hosted Deployment*
-
-The Cloud Run deployment is no longer hosted publicly (the service was stopped to avoid continuous billing). You can deploy it yourself using the deployment files in the respective directories:
-
-**V8 Deployment:** [`Backend/v8_production/v8_cloud_run_deployment/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/v8_production/v8_cloud_run_deployment) — Contains `Dockerfile`, `main.py`, `requirements.txt`, and `v8_xgboost_wavlm.json` (XGBoost model)
-
-**V8.1 Deployment:** [`Backend/v8_1_production/v8_1_cloud_run_deployment/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/v8_1_production/v8_1_cloud_run_deployment) — Contains `Dockerfile`, `main.py`, `requirements.txt`, and `v8_1_lightgbm.txt` (LightGBM model)
-
-**Stack:** Docker · FastAPI · PyTorch · WavLM · Whisper · LightGBM/XGBoost · Google Cloud Container Registry
-
-> To deploy: Build the Docker image and push to Google Cloud Container Registry, then deploy to Cloud Run. The `main.py` in each directory provides the FastAPI inference API with threat scoring.
-
-### Hugging Face Spaces — *Current Public Backend*
-
+### 1. Hugging Face Spaces — *Public Demo Backend*
+The V8.1 model is currently hosted on Hugging Face Spaces for public testing:
 ```
 https://venkatasriram-audio-forensics-v8-1-demo.hf.space
 ```
+- **Endpoints:** REST static file upload (`/analyze`), WebSocket streaming (`/ws/stream`), health probe (`/health`), model specifications (`/model-info`).
+- **Files:** [`Backend/v8_1_production/v8_1_hugging_face_deployment/`](Backend/v8_1_production/v8_1_hugging_face_deployment/)
 
-Provides: Static analysis API · WebSocket live streaming · V8.1 forensic inference
+### 2. Google Cloud Run — *Containerized Setup*
+Deployment files for Google Cloud Run (self-hosted to avoid continuous cloud billing):
+- **V8 Container:** [`Backend/v8_production/v8_cloud_run_deployment/`](Backend/v8_production/v8_cloud_run_deployment/) — Dockerfile, FastAPI service, and `v8_xgboost_wavlm.json`.
+- **V8.1 Container:** [`Backend/v8_1_production/v8_1_cloud_run_deployment/`](Backend/v8_1_production/v8_1_cloud_run_deployment/) — Dockerfile, FastAPI service, and `v8_1_lightgbm.txt`.
 
-📄 **Code:** [`Dockerfile`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_hugging_face_deployment/Dockerfile) · [`main.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_hugging_face_deployment/main.py)
+---
+
+## 📂 Repository Structure
+
+```text
+AI-Voice-Forensics/
+├── Backend/                                # Multi-generational backend serving engines
+│   ├── v3_production/                      # V3: Hybrid CRNN + ONNX inference service
+│   │   ├── server.py                       # FastAPI REST & WebSocket streaming server
+│   │   ├── thunderbuddies_v3.onnx          # Pretrained V3 ONNX inference graph (47.3 MB)
+│   │   ├── thunderbuddies_model_v3.pth     # PyTorch checkpoint (V3 epoch weights)
+│   │   ├── thunderbuddies_model_v2.pth     # PyTorch checkpoint (V2 epoch weights)
+│   │   └── thunderbuddies_model.pth        # PyTorch checkpoint (V1 epoch weights)
+│   ├── v4_production/                      # V4: Transformer Wav2Vec2 + XGBoost engine
+│   │   ├── Dockerfile                      # Container definition with ffmpeg
+│   │   ├── main.py                         # FastAPI assessment API
+│   │   ├── requirements.txt                # Pinned dependencies
+│   │   ├── v4_xgboost_wav2vec2.json        # Pretrained XGBoost classifier
+│   │   └── wav2vec2_onnx_production/       # Optimized Wav2Vec2 ONNX graph
+│   │       └── model.onnx                  # Exported Wav2Vec2 base model (360 MB)
+│   ├── v5_production/                      # V5: Streaming microservice wrapper
+│   │   ├── Dockerfile                      # Container deployment file
+│   │   ├── main.py                         # Async WebSocket streaming & static endpoint
+│   │   ├── requirements.txt                # Service dependencies
+│   │   ├── stream_tester_v5.py             # WebSocket streaming integration test client
+│   │   └── v4_xgboost_wav2vec2.json        # Calibrated classifier weights
+│   ├── v6_production/                      # V6: Phase-aware LFCC + Wav2Vec2 classifier
+│   │   ├── Dockerfile                      # Container configuration
+│   │   ├── main.py                         # Forensic inference service
+│   │   ├── requirements.txt                # Signal processing dependencies
+│   │   ├── static_tester_v6.py             # File-based batch testing utility
+│   │   ├── stream_tester_v6.py             # Streaming audio client simulator
+│   │   ├── v6_dataset_generation.py        # Feature extractor for LFCC + transformer fusion
+│   │   ├── v6_grand_evaluation_plots.png   # Performance curves and ROC analysis
+│   │   ├── v6_train.py                     # Multi-feature XGBoost training script
+│   │   └── v6_xgboost_grand_classifier.json # Trained 60-D LFCC + 768-D classifier
+│   ├── v7_siamese_production/              # V7: Contrastive Siamese WavLM metric engine
+│   │   ├── step1_extract_dna.py            # Latent voice embedding cache extractor
+│   │   ├── step2_train_head.py             # Contrastive projection head training script
+│   │   ├── v7_siamese_evaluation.png       # Pairwise distance distribution plots
+│   │   ├── v7_siamese_train.py             # Siamese contrastive distance trainer
+│   │   ├── wavlm_siamese_head_only.pth     # Lightweight projection head weights (791 KB)
+│   │   └── wavlm_siamese_v7.pth            # Complete WavLM Siamese model (378 MB)
+│   ├── v8_production/                      # V8: Cached WavLM DNA + XGBoost engine
+│   │   ├── evaluation_metrics.txt          # Benchmark metrics across 14,671 samples (99.71%)
+│   │   ├── v8_cloud_run_deployment/        # Standalone Google Cloud Run deployment bundle
+│   │   │   ├── Dockerfile                  # Container definition
+│   │   │   ├── main.py                     # FastAPI inference engine
+│   │   │   ├── requirements.txt            # Minimal runtime dependencies
+│   │   │   └── v8_xgboost_wavlm.json       # Trained XGBoost model file
+│   │   ├── v8_evaluation_plots.png         # Confusion matrix and KDE density curve
+│   │   ├── v8_extract.py                   # Clip-level WavLM embedding extraction pipeline
+│   │   └── v8_train.py                     # XGBoost hyperparameter tuning & training
+│   └── v8_1_production/                    # V8.1: Dual-Branch WavLM + LFCC + LightGBM (Final Model)
+│       ├── evaluation_metrics.txt          # Evaluation report (99.84% accuracy on test set)
+│       ├── stream_tester_v8_1.py           # Real-time WebSocket simulator client
+│       ├── v8_1_cloud_run_deployment/      # Google Cloud Run deployment bundle
+│       │   ├── Dockerfile                  # Container definition
+│       │   ├── main.py                     # FastAPI serving service
+│       │   ├── requirements.txt            # Service requirements
+│       │   └── v8_1_lightgbm.txt           # Serialized LightGBM booster model
+│       ├── v8_1_evaluation_plots.png       # KDE & confusion matrix plots
+│       ├── v8_1_extract.py                 # Fused 848-D feature vector extraction engine
+│       ├── v8_1_hugging_face_deployment/   # Hugging Face Spaces deployment bundle
+│       │   ├── Dockerfile                  # Spaces container
+│       │   ├── main.py                     # Public static + WebSocket serving entrypoint
+│       │   ├── requirements.txt            # Lightweight inference dependencies
+│       │   └── v8_1_lightgbm.txt           # LightGBM booster model
+│       └── v8_1_train.py                   # LightGBM training script with early stopping
+├── Frontend/                               # Full-stack React / Vite dashboard
+│   ├── apps/
+│   │   ├── api/                            # Backend proxy and mock handlers
+│   │   └── web/                            # React 18 SPA (Vite + Tailwind CSS + shadcn/ui)
+│   │       ├── src/
+│   │       │   ├── components/             # UI widgets (UploadZone, ResultCard)
+│   │       │   ├── contexts/AuthContext.jsx # Firebase Authentication & Firestore state
+│   │       │   └── lib/                    # API helpers, response normalizers, websocket clients
+│   │       ├── package.json                # Frontend dependencies
+│   │       └── vite.config.js              # Vite build configuration
+│   └── package.json                        # Root monorepo workspace definition
+├── Data Preprocessing/                     # Dataset curation & synthetic generation scripts
+│   ├── Testing_Different_TTS_Engines.ipynb # TTS engine comparative research notebook
+│   ├── booster_seed_sentences.csv          # 140 multilingual seed prompts
+│   ├── convert_audio.py                    # Audio standardizer (16kHz, mono, RMS normalized)
+│   ├── download_all.sh                     # Mozilla Data Collective automated downloader
+│   ├── elevenlabs_fake_audio_generation.py # ElevenLabs v3 API generation script
+│   ├── extract_voices.sh                   # Voice segmentation & silence trimming script
+│   ├── glotlid_detector.py                 # Pre-training GlotLID language check
+│   ├── glotlid_detector_output.txt         # Language classification verification log
+│   ├── master_pipeline.py                  # End-to-end dataset synthesis & balancing orchestrator
+│   ├── openai_gcp_booster_generation.py    # OpenAI TTS-1-HD & Google Cloud Neural2 pipeline
+│   └── transcript_checking.py              # Transcript alignment & text verification utility
+├── Audio-Samples/                          # Curated test clips for manual evaluation (~131 MB)
+│   ├── Fake/                               # Synthetic voice samples
+│   │   ├── ChatGPT/                        # 130 OpenAI TTS clips across 13 voices
+│   │   ├── ElevenLabs/                     # 32 ElevenLabs v2 & v3 voice clips
+│   │   ├── Hume AI/                        # 5 expressive voice clips
+│   │   └── Voicemaker/                     # 2 neural speech synthesis clips
+│   ├── Real/                               # 21 authentic human voice recordings
+│   └── Real+Fake/                          # 4 concatenated hybrid clips for boundary testing
+├── download_dataset.py                     # CLI automated downloader for Internet Archive packages
+├── live_stream_tester_v8_1.py              # Live WebSocket streaming evaluation client
+├── model_evolution_notebook.ipynb         # Interactive research notebook (V1 → V8.1 history)
+└── v8_1_architecture_pipeline.png          # Architectural infographic
+```
 
 ---
 
 ## 🧠 System Architecture
 
 ```mermaid
-flowchart LR
-    A[User Audio Input] --> B[REST API / WebSocket]
-    B --> C[Audio Validation]
-    C --> D[GlotLID Language Check]
-    D --> E[Preprocessing]
-    E --> F[WavLM Encoder]
-    E --> G[LFCC Extraction]
-    F --> H[Feature Fusion]
-    G --> H
-    H --> I[848-D Feature Vector]
-    I --> J[LightGBM Classifier]
-    J --> K[AI / Human Classification]
-    K --> L[Threat Scoring]
-    L --> M[Automated Forensic Report]
-    M --> N[Dashboard]
+flowchart TD
+    subgraph INGRESS["1. Audio Ingress & Validation"]
+        A["Audio Input (File Upload / 16kHz Stream)"] --> B["Format Normalization (16kHz Mono WAV)"]
+        B --> C["GlotLID Language Check"]
+        C --> D["Silence & RMS Energy Gating"]
+    end
+
+    subgraph DUAL_BRANCH["2. Dual-Branch Feature Extraction"]
+        D --> E["Branch A: Self-Supervised Speech Model<br/>(WavLM Large)"]
+        D --> F["Branch B: Acoustic Signal Features<br/>(Linear Frequency Cepstral Coefficients - LFCC)"]
+        E --> G["768-D Contextual Embedding"]
+        F --> H["80-D Spectral / Phase Features"]
+    end
+
+    subgraph FUSION["3. Feature Fusion & Classification"]
+        G --> I["Concatenation Layer"]
+        H --> I
+        I --> J["848-D Fused Feature Vector"]
+        J --> K["LightGBM Classifier"]
+    end
+
+    subgraph OUTPUT["4. Prediction & Output"]
+        K --> L["Calibrated Probability Score"]
+        L --> M["Risk Classification (Verified → Critical)"]
+        M --> N["JSON Response / WebSocket Message"]
+        N --> O["React UI Dashboard"]
+    end
 ```
 
-**Pipeline at a glance:** `Audio Input → REST/WebSocket → Validation → Preprocessing → WavLM + LFCC → Feature Fusion → LightGBM → Threat Report`
-
-📄 **Implementation:** [`v8_1_extract.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_extract.py) (WavLM + LFCC feature fusion) · [`v8_1_train.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_train.py) (LightGBM training) · [`main.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_cloud_run_deployment/main.py) (FastAPI inference + threat scoring) · [`v8_extract.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_production/v8_extract.py) (WavLM feature extraction) · [`v8_train.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_production/v8_train.py) (XGBoost training) · [`main.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_production/v8_cloud_run_deployment/main.py) (V8 FastAPI inference)
+### Pipeline Overview:
+1. **Audio Preprocessing:** Input recordings are normalized to 16,000 Hz 16-bit mono PCM. Silence and low-energy segments are trimmed.
+2. **GlotLID Language Check:** Validates language identity against the 9 supported language distributions (`eng`, `fra`, `deu`, `spa`, `cat`, `ben`, `kin`, `pus`, `zho`).
+3. **Dual-Branch Extraction:**
+   - **Branch A (WavLM Large):** Extracts a 768-D representation capturing temporal rhythm, acoustic continuity, and phonetic context.
+   - **Branch B (LFCC):** Extracts 80-D Linear Frequency Cepstral Coefficients (static, delta, and acceleration) across linear filterbanks to highlight phase and high-frequency spectral rolloff common in neural vocoders.
+4. **LightGBM Classification:** The fused 848-D feature vector is classified by LightGBM in ~12 milliseconds, generating human vs. synthetic probability scores.
+5. **Output Generation:** The prediction is mapped to an interpretable risk level and returned via REST or WebSocket.
 
 ---
 
-## 🧬 Model Evolution
+## ⚙️ Backend Engines (V3 – V8.1)
+
+The `Backend/` directory contains seven serving versions built during the project:
+
+| Version | Directory | Architecture | Typical Latency | Key Files |
+|---|---|---|---|---|
+| **V3** | [`Backend/v3_production/`](Backend/v3_production/) | Hybrid CRNN + ONNX | ~180 ms | [`server.py`](Backend/v3_production/server.py), `thunderbuddies_v3.onnx` (47 MB) |
+| **V4** | [`Backend/v4_production/`](Backend/v4_production/) | Wav2Vec2 (ONNX) + Whisper + XGBoost | ~120 ms | [`main.py`](Backend/v4_production/main.py), `v4_xgboost_wav2vec2.json`, `model.onnx` (360 MB) |
+| **V5** | [`Backend/v5_production/`](Backend/v5_production/) | Streaming Microservice Wrapper | ~95 ms | [`main.py`](Backend/v5_production/main.py), [`stream_tester_v5.py`](Backend/v5_production/stream_tester_v5.py) |
+| **V6** | [`Backend/v6_production/`](Backend/v6_production/) | 60-D LFCC + Wav2Vec2 + XGBoost | ~85 ms | [`main.py`](Backend/v6_production/main.py), `v6_xgboost_grand_classifier.json`, [`v6_train.py`](Backend/v6_production/v6_train.py) |
+| **V7** | [`Backend/v7_siamese_production/`](Backend/v7_siamese_production/) | Siamese WavLM Metric Network | ~110 ms | [`v7_siamese_train.py`](Backend/v7_siamese_production/v7_siamese_train.py), `wavlm_siamese_v7.pth` (378 MB) |
+| **V8** | [`Backend/v8_production/`](Backend/v8_production/) | WavLM DNA (768-D) + XGBoost | ~45 ms | [`v8_extract.py`](Backend/v8_production/v8_extract.py), [`v8_train.py`](Backend/v8_production/v8_train.py), `v8_cloud_run_deployment/` |
+| **V8.1** | [`Backend/v8_1_production/`](Backend/v8_1_production/) | **Dual-Branch WavLM + LFCC (848-D) + LightGBM** | **~12 ms** | [`v8_1_extract.py`](Backend/v8_1_production/v8_1_extract.py), [`v8_1_train.py`](Backend/v8_1_production/v8_1_train.py), `v8_1_lightgbm.txt` |
+
+### Engine Summaries:
+
+#### 1. V8.1 Model (*Current Final Version*)
+- **Design:** Dual-branch feature fusion combining transformer embeddings with signal features.
+- **Features:** 848 dimensions (768 WavLM embeddings + 80 LFCC coefficients).
+- **Classifier:** LightGBM Booster (`v8_1_lightgbm.txt`), evaluated on CPU with multi-threading.
+- **Evaluation:** 99.84% accuracy across 14,671 out-of-sample clips.
+- **Deployment:** Deployment configurations available for [Google Cloud Run](Backend/v8_1_production/v8_1_cloud_run_deployment/) and [Hugging Face Spaces](Backend/v8_1_production/v8_1_hugging_face_deployment/).
+
+#### 2. V8 Model
+- **Design:** Uses clip-level WavLM embeddings directly with an XGBoost classifier.
+- **Features:** 768 dimensions.
+- **Classifier:** XGBoost (`v8_xgboost_wavlm.json`).
+- **Evaluation:** 99.71% accuracy on the test set.
+
+#### 3. V7 Siamese Model
+- **Design:** Siamese neural network using a WavLM backbone with contrastive loss to compute Euclidean distances between voice samples.
+- **Files:** Projection head weights [`wavlm_siamese_head_only.pth`](Backend/v7_siamese_production/wavlm_siamese_head_only.pth) (791 KB) and full model [`wavlm_siamese_v7.pth`](Backend/v7_siamese_production/wavlm_siamese_v7.pth) (378 MB).
+
+#### 4. V6 Model
+- **Design:** Introduced LFCC (Linear Frequency Cepstral Coefficients) alongside Wav2Vec2 to test whether hand-crafted spectral features helped identify vocoder artifacts.
+- **Files:** [`v6_xgboost_grand_classifier.json`](Backend/v6_production/v6_xgboost_grand_classifier.json).
+
+#### 5. V4 & V5 Models
+- **Design:** Transitioned from 2D spectrogram representations to 1D speech representations via Wav2Vec2 (exported to ONNX for lower latency) paired with XGBoost. V5 added an asynchronous WebSocket chunking server.
+
+#### 6. V3 Model
+- **Design:** Convolutional Recurrent Neural Network (CRNN) using Mel-Spectrogram arrays, served through ONNX Runtime (`thunderbuddies_v3.onnx`).
+
+---
+
+## 🧬 Model Evolution & Benchmarks
 
 ```mermaid
 timeline
-    title Audio Forensics Model Evolution
-    V1 : CRNN + Mel Spectrogram : Baseline spectrogram deep learning
-    V2 : Augmented CRNN : Noise injection, time/frequency masking
-    V3 : Hybrid CRNN : Improved robustness
-    V4 : Wav2Vec2 + XGBoost : Transformer embeddings, Whisper support
-    V5 : Production Wrapper : FastAPI, ONNX inference, WebSocket streaming
-    V6 : Wav2Vec2 + LFCC + XGBoost : Signal forensic features
-    V7 : Siamese WavLM : Similarity learning, embedding comparison
-    V8 : WavLM DNA + XGBoost : Cached embeddings, optimized inference
-    V8.1 : WavLM + LFCC + LightGBM : Final production forensic engine
+    title Model Evolution
+    V1 Baseline : CRNN + Mel Spectrogram : Initial 2D CNN + GRU model
+    V2 Robust : Augmented CRNN : Added SpecAugment time/frequency masking
+    V3 Hybrid : Hybrid CRNN (ONNX) : Exported to ONNX for faster serving
+    V4 Transformer : Wav2Vec2 + XGBoost : Transitioned to transformer speech representations
+    V5 Service : Microservice Wrapper : Containerized FastAPI with WebSocket chunking
+    V6 Multi-Signal : LFCC + Wav2Vec2 + XGBoost : Added LFCC signal features
+    V7 Siamese : Siamese WavLM : Pairwise similarity learning
+    V8 Cached : WavLM DNA + XGBoost : Cached embeddings, fast inference (99.71%)
+    V8.1 Final : Fused WavLM + LFCC + LightGBM : Dual-branch model (99.84%)
 ```
 
-<details>
-<summary><b>Expand version-by-version details</b></summary>
+### Benchmark Summary Across Iterations:
 
-| Version | Architecture | Highlights | Code |
-|---|---|---|---|
-| **V1** | CRNN + Mel Spectrogram | Baseline; limited generalization, noise-sensitive | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) |
-| **V2** | Augmented CRNN | Added noise injection, time/frequency masking | [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) |
-| **V3** | Hybrid CRNN | Improved augmentation strategy and generalization | [server.py](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v3_production/server.py) · [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) |
-| **V4** | Wav2Vec2 + XGBoost | Major shift to transformer embeddings + Whisper | [V4 Production](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/v4_production) · [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) |
-| **V5** | Production Wrapper | FastAPI, ONNX inference, static + WebSocket API | [V5 Production](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/v5_production) · [Notebook](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) |
-| **V6** | Wav2Vec2 + LFCC + XGBoost | Added phase analysis, better artifact detection | [train.py](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v6_production/v6_train.py) · [V6 Production](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/v6_production) |
-| **V7** | Siamese WavLM | WavLM encoder, pair-based similarity training | [siamese_train.py](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v7_siamese_production/v7_siamese_train.py) · [V7 Production](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/v7_siamese_production) |
-| **V8** | WavLM DNA + XGBoost | Clip-level cached embeddings, efficient inference | [train.py](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_production/v8_train.py) · [extract.py](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_production/v8_extract.py) |
-| **V8.1** | WavLM + LFCC + LightGBM | **Final production engine — 99.84% accuracy** | [train.py](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_train.py) · [extract.py](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_extract.py) · [main.py](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_cloud_run_deployment/main.py) |
+| Generation | Feature Type | Features | Classifier | Test Accuracy | False Positive Rate | Latency |
+|---|---|---|---|---|---|---|
+| **V1** | Mel-Spectrogram | 128 × 128 | PyTorch CRNN | 88.40% | 7.82% | 220 ms |
+| **V2** | SpecAugment Mel | 128 × 128 | PyTorch CRNN | 91.15% | 5.40% | 215 ms |
+| **V3** | Mel-Spectrogram | 128 × 128 | ONNX CRNN | 93.20% | 4.10% | 180 ms |
+| **V4** | Wav2Vec2 Base | 768-D | XGBoost | 96.85% | 2.15% | 120 ms |
+| **V5** | Wav2Vec2 (ONNX) | 768-D | XGBoost | 97.10% | 1.80% | 95 ms |
+| **V6** | Wav2Vec2 + LFCC | 828-D | XGBoost | 98.60% | 0.95% | 85 ms |
+| **V7** | WavLM Siamese | 256-D Proj | Contrastive Head | 98.92% | 0.70% | 110 ms |
+| **V8** | WavLM Large DNA | 768-D | XGBoost | 99.71% | 0.28% | 45 ms |
+| **V8.1 (Final)** | **WavLM Large + LFCC** | **848-D Fused** | **LightGBM** | **99.84%** | **0.13%** | **12 ms** |
 
-</details>
+### V8.1 Evaluation Report (14,671 Test Clips)
 
-### 🪜 Step-by-Step Model Evolution
+From [`Backend/v8_1_production/evaluation_metrics.txt`](Backend/v8_1_production/evaluation_metrics.txt):
 
-#### V1 — CRNN + Mel Spectrogram
-Initial baseline using spectrogram-based deep learning.
-- **Limitations:** Limited generalization · sensitive to noise
-- **Disadvantage:** Spectrogram-only input made the model brittle to background noise and unable to generalize beyond its training distribution.
-- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"CRNN Original Brain (Version 1)"* section
+```text
+              precision    recall  f1-score   support
 
-#### V2 — Augmented CRNN
-Improved on V1 by introducing data augmentation to the training pipeline.
-- **Added:** Noise injection · Time masking · Frequency masking
-- **Result:** Improved robustness over the V1 baseline
-- **Disadvantage:** Augmentation improved noise tolerance but the underlying CRNN backbone still capped overall detection quality.
-- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"Model Version 2"* section
+Authentic (0)       1.00      1.00      1.00      6,750
+Synthetic (1)       1.00      1.00      1.00      7,921
 
-#### V3 — Hybrid CRNN
-Refined the augmentation strategy further.
-- **Result:** Improved generalization and a more stable hybrid CRNN design
-- **Disadvantage:** Still spectrogram-bound, so cross-language and unseen-TTS-engine generalization remained a bottleneck.
-- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"Training Model Version 3"* section
+    accuracy                           1.00     14,671
+   macro avg       1.00      1.00      1.00     14,671
+weighted avg       1.00      1.00      1.00     14,671
 
-#### V4 — Wav2Vec2 + XGBoost
-A major architectural shift away from spectrograms and into transformer-based speech embeddings.
-- **Added:** Wav2Vec2 transformer features · Whisper language support · XGBoost classifier
-- **Result:** Significant jump in detection quality by moving to learned speech representations
-- **Disadvantage:** Loading the full PyTorch transformer at inference made the model too slow and heavy for real-time use.
-- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"Model Version 4 Training"* section · [`Backend/v4_production/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/v4_production)
+CONFUSION MATRIX:
+  - Authentic Human correctly classified: 6,741 / 6,750 (99.87% True Negative Rate)
+  - Authentic Human misclassified as AI:      9 / 6,750 (0.13% False Positive Rate)
+  - Synthetic AI correctly classified:   7,907 / 7,921 (99.82% True Positive Rate)
+  - Synthetic AI misclassified as Human:    14 / 7,921 (0.18% False Negative Rate)
 
-#### V5 — Production Wrapper
-Converted the V4 research model into deployable, production-ready infrastructure (a wrapper around V4, not a new model).
-- **Added:** FastAPI service layer · ONNX inference · Static analysis API · WebSocket streaming
-- **Result:** First version capable of being deployed and queried as a real service
-- **Disadvantage:** Purely a deployment/optimization wrapper around V4 — it improved latency and serving, not raw detection accuracy.
-- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"Model Version 5"* section · [`Backend/v5_production/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/v5_production)
+TOTAL ACCURACY: 99.84% (23 total errors across 14,671 samples)
+```
 
-#### V6 — Wav2Vec2 + LFCC + XGBoost
-Introduced signal-processing forensic features alongside the transformer embeddings.
-- **Added:** LFCC (Linear Frequency Cepstral Coefficients) features · Phase analysis
-- **Result:** Better artifact detection by combining learned and hand-engineered forensic signals
-- **Disadvantage:** Extracting LFCCs alongside Wav2Vec2 embeddings added extra compute overhead per inference call.
-- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"Version 6 Testing"* section · [`v6_train.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v6_production/v6_train.py) · [`Backend/v6_production/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/v6_production)
-
-#### V7 — Siamese WavLM
-Introduced similarity-learning to compare voice samples directly.
-- **Added:** WavLM encoder (replacing Wav2Vec2) · Pair-based Siamese training · Embedding comparison
-- **Result:** Enabled the system to learn relative similarity between genuine and synthetic voices, not just absolute classification
-- **Disadvantage:** Pair-based similarity training is more complex and slower to train than direct classification approaches.
-- **Code:** [`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb) — *"Version 7 Testing"* section · [`v7_siamese_train.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v7_siamese_production/v7_siamese_train.py) · [`Backend/v7_siamese_production/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/v7_siamese_production)
-
-#### V8 — WavLM DNA + XGBoost
-A production-optimization pass focused on inference efficiency.
-- **Added:** Clip-level WavLM embeddings · Embedding caching · More efficient inference pipeline
-- **Result:** Faster, more scalable inference without sacrificing the V7 detection gains
-- **Disadvantage:** XGBoost inference was comparatively slower and heavier than the LightGBM classifier later adopted in V8.1.
-- **Code:** [`v8_train.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_production/v8_train.py) · [`v8_extract.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_production/v8_extract.py) · [`v8_xgboost_wavlm.json`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_production/v8_cloud_run_deployment/v8_xgboost_wavlm.json) · [`Cloud Run Deployment`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/v8_production/v8_cloud_run_deployment)
-
-#### V8.1 — WavLM + LFCC + LightGBM *(Final Production Engine)*
-The final, fused architecture combining transformer embeddings with forensic signal features under a lighter, faster classifier.
-- **Pipeline:** Audio → WavLM Encoder + LFCC Extraction → 848-D Feature Vector → LightGBM → AI / Human Classification
-- **Added:** LightGBM meta-classifier (replacing XGBoost) for faster inference · Optimized LFCC feature extraction
-- **Result:** **99.84% accuracy** — the current production forensic engine powering both the static and real-time APIs
-- **Disadvantage:** Running both the WavLM encoder and LFCC extraction per audio chunk still adds more compute than a single-branch model.
-- **Code:** [`v8_1_train.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_train.py) · [`v8_1_extract.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_extract.py) · [`main.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_cloud_run_deployment/main.py) (production inference API) · [`Cloud Run Deployment`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend/v8_1_production/v8_1_cloud_run_deployment)
+![V8.1 Evaluation Plots](Backend/v8_1_production/v8_1_evaluation_plots.png)
 
 ---
 
-## 📊 Dataset & Model Download
+## 🛠️ Model Training & Feature Extraction
 
-The complete Audio Forensics package (**27.4GB**) contains all major development assets from the project, including:
+Each model generation in `Backend/` is self-contained with its own feature extraction, training, and testing scripts:
 
-- 🧠 8 iterative model generations (V1 → V8.1)
-- 🎙️ Raw real and synthetic audio datasets
-- 🧪 Training and evaluation scripts ([`Backend/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Backend) · [`Data Preprocessing/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Data%20Preprocessing))
-- 📓 Primary research and experimentation notebooks ([`model_evolution_notebook.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/model_evolution_notebook.ipynb))
+### 1. Feature Extraction
+Extract precomputed features from raw audio:
+```bash
+# Extract 848-D Fused WavLM + LFCC features for V8.1
+python Backend/v8_1_production/v8_1_extract.py
 
-The complete archive is available here:
+# Extract 768-D WavLM embeddings for V8
+python Backend/v8_production/v8_extract.py
 
-- 🌐 [Internet Archive Project Page](https://archive.org/details/Audio-Forensics-Models)
-- 💾 [Direct Download Directory](https://archive.org/download/Audio-Forensics-Models)
+# Extract embeddings for V7 Siamese training
+python Backend/v7_siamese_production/step1_extract_dna.py
+```
 
-> The dataset package contains research artifacts, model evolution history, and supporting resources used throughout the development of the production forensic engine.
+### 2. Model Training
+Train classifiers on the cached features:
+```bash
+# Train the V8.1 LightGBM model
+python Backend/v8_1_production/v8_1_train.py
 
-### 🐧 Downloading via Linux Terminal
+# Train the V8 XGBoost model
+python Backend/v8_production/v8_train.py
 
-The package lives on the Internet Archive under the `Audio-Forensics-Models` item. The main payload — `jupyter_workspace_backup_20260622.tar.gz` (~27.4 GB) — can be pulled straight to a Linux machine with `wget` or `curl`.
+# Train the V7 Siamese contrastive head
+python Backend/v7_siamese_production/v7_siamese_train.py
+
+# Train the V6 LFCC + Wav2Vec2 classifier
+python Backend/v6_production/v6_train.py
+```
+
+### 3. Testing & Simulation
+Run local batch or streaming tests:
+```bash
+# Test real-time V8.1 WebSocket inference against a local or remote server
+python live_stream_tester_v8_1.py
+
+# Test V6 batch static analysis
+python Backend/v6_production/static_tester_v6.py
+
+# Verify transcript alignment
+python "Data Preprocessing/transcript_checking.py"
+```
+
+---
+
+## 📦 Dataset & Model Downloads (Internet Archive)
+
+The training data, precomputed feature tensors, and model weights (~24 GB uncompressed / 17.7 GB compressed) are hosted on the Internet Archive for open academic access:
+
+- 🌐 **Internet Archive Collection:** [archive.org/details/ai-voice-forensics-dataset](https://archive.org/details/ai-voice-forensics-dataset)
+- 💾 **Direct Download Directory:** [archive.org/download/ai-voice-forensics-dataset/](https://archive.org/download/ai-voice-forensics-dataset/)
+- **Authors:** **Venkata Sriram Topalli** & **Ayush M Singh**
+- **License:** Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
+
+### Modular Package Breakdown:
+
+| Archive Name | Target Folder | Compressed Size | Uncompressed | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **`heavy_model_weights.tar.gz`** | `Backend/**` | **716.1 MB** | ~910 MB | Pretrained ONNX & PyTorch weights (`thunderbuddies_v3.onnx`, `model.onnx`, `wavlm_siamese_v7.pth`, `thunderbuddies_model_v3.pth`) |
+| **`dna_feature_caches.tar.gz`** | `cache/` | **1,008.0 MB** | ~2.3 GB | Precomputed 768-D WavLM DNA & 848-D Fused WavLM+LFCC latent tensors for training without GPU |
+| **`elevenlabs_v3_synthetic_speech.tar.gz`** | `data/elevenlabs_v3_synthetic_speech/` | **443.9 MB** | ~467 MB | 7,700 dynamic ElevenLabs v3 clips sampled across 21 voices and 7 languages |
+| **`openai_gcp_booster_pack.tar.gz`** | `data/openai_gcp_booster_pack/` | **8.4 MB** | ~12 MB | 130 Neural2 / Journey / Nova clips with micro-noise injection |
+| **`spectrogram_data.tar.gz`** | `data/spectrogram_data/` | **2,512.0 MB** | ~3.4 GB | Precomputed 2D Mel-Spectrogram arrays (`.npy`) across 9 languages for V1–V3 models |
+| **`multilingual_base_corpus.tar.gz`** | `data/multilingual_base_corpus/` | **13,029.1 MB** | ~17 GB | Core multilingual training corpus (~90,000 real and synthetic audio clips across 9 languages) |
+| **`checksums.txt`** | Root | **1 KB** | 1 KB | SHA-256 verification checksums for all packages |
+
+### 🚀 Automated Download Script (`download_dataset.py`)
+
+A Python CLI script is included to download, verify SHA-256 checksums, and extract any package:
 
 ```bash
-# 1. Create and move into a working directory
-mkdir -p ~/audio-forensics-data && cd ~/audio-forensics-data
+# Interactive selection menu
+python download_dataset.py
 
-# 2. Check you have enough free disk space (27.4GB+ for the archive, more once extracted)
-df -h .
-
-# 3. Download the archive — wget shows progress and -c lets it resume if interrupted
-wget -c https://archive.org/download/Audio-Forensics-Models/jupyter_workspace_backup_20260622.tar.gz
-
-# --- OR, using curl ---
-curl -L -C - -O https://archive.org/download/Audio-Forensics-Models/jupyter_workspace_backup_20260622.tar.gz
-
-# 4. Confirm the file downloaded completely (compare size against the Internet Archive listing)
-ls -lh jupyter_workspace_backup_20260622.tar.gz
-
-# 5. Extract the archive (this can take a while given the size)
-tar -xzvf jupyter_workspace_backup_20260622.tar.gz
-
-# 6. (Optional) Extract directly to a specific destination instead of the current folder
-tar -xzvf jupyter_workspace_backup_20260622.tar.gz -C /path/to/destination
+# Download specific components:
+python download_dataset.py --models      # Download model weights (~716 MB)
+python download_dataset.py --caches      # Download feature caches (~1.0 GB)
+python download_dataset.py --elevenlabs  # Download ElevenLabs v3 dataset (~444 MB)
+python download_dataset.py --booster     # Download OpenAI & GCP booster pack (~8.4 MB)
+python download_dataset.py --corpus      # Download base multilingual corpus (~13 GB)
+python download_dataset.py --all         # Download and extract everything (~17.7 GB)
 ```
 
-> 💡 If the download drops midway, just re-run the same `wget -c` (or `curl -C -`) command — both resume from where they left off instead of starting over.
+### Manual Download via `wget`:
+```bash
+# Example: Download and extract model weights
+wget -c https://archive.org/download/ai-voice-forensics-dataset/heavy_model_weights.tar.gz
+tar -xzvf heavy_model_weights.tar.gz
+
+# Example: Download and extract feature caches
+wget -c https://archive.org/download/ai-voice-forensics-dataset/dna_feature_caches.tar.gz
+tar -xzvf dna_feature_caches.tar.gz
+```
 
 ---
 
-## 📊 Dataset Intelligence
+## 🌍 Dataset Intelligence & Mozilla Data Collective
 
-The model is trained on a deliberately diverse mix of:
+The dataset was assembled to represent authentic human speech and synthetic voices across 9 languages with an even 50/50 balance:
 
-- Real human speech
-- AI-generated synthetic speech
-- Multilingual speech across multiple speakers
-- Multiple TTS architectures
+### Corpus Composition:
+- **Audio Files:** ~90,000 clips standardized to 16 kHz 16-bit Mono WAV.
+- **Authentic Speech (50%):** Mozilla Common Voice Scripted Speech Corpus (v26.0).
+- **Synthetic Speech (50%):** Meta MMS, Coqui x-TTS, Microsoft Edge-TTS, ElevenLabs v3, OpenAI TTS, Google Cloud Neural2.
 
-**Goal:** detect *synthetic artifacts* rather than memorizing language, speaker, or dataset bias.
+### Language Coverage Table:
 
-📄 **Code:** [`master_pipeline.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Data%20Preprocessing/master_pipeline.py) (end-to-end dataset construction) · [`download_all.sh`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Data%20Preprocessing/download_all.sh) (Mozilla Data Collective downloader)
-
-### 🌍 Mozilla Data Collective
-
-Built on **Mozilla's Open Voice Data Initiative**, a community-driven effort to democratize voice AI training data and increase representation of underrepresented languages (Kinyarwanda, Pashto, Bengali, and more).
-
-### ⚖️ Real vs. Synthetic Split
-
-| Type | Count | Share | Source |
-|---|---|---|---|
-| **Real Audio** | 45,000 | 50% | Mozilla Data Collective speech recordings |
-| **Synthetic Audio** | 45,000 | 50% | MMS · x-TTS · Microsoft Edge TTS |
-
-### 🌍 Language Selection History
-
-The project initially started with support for **11 target languages**:
-
-English, German, French, Spanish, Chinese, Catalan, Bengali, Kinyarwanda, Pashto, Belarusian, and Esperanto.
-
-During dataset validation and preparation, Belarusian and Esperanto were removed due to:
-
-- Limited available high-quality speech data
-- Data scarcity for synthetic voice generation
-- Language standardization and consistency challenges
-
-The final production dataset and evaluation pipeline used **9 languages**:
-
-English, German, French, Spanish, Chinese, Catalan, Bengali, Kinyarwanda, and Pashto.
-
-### 🗣️ Language Coverage
-
-<details>
-<summary><b>Expand full language-by-language breakdown</b></summary>
-
-| Language | ISO 639-3 | Synthetic Engine | Mozilla Dataset Source |
-|---|---|---|---|
-| English | `eng` | x-TTS | Common Voice Scripted Speech 26.0 - English |
-| French | `fra` | x-TTS | Common Voice Scripted Speech 26.0 - French |
-| German | `deu` | x-TTS | Common Voice Scripted Speech 26.0 - German |
-| Spanish | `spa` | x-TTS | Common Voice Scripted Speech 26.0 - Spanish |
-| Catalan | `cat` | MMS | Common Voice Scripted Speech 26.0 - Catalan |
-| Bengali | `ben` | MMS | Common Voice Scripted Speech 26.0 - Bengali |
-| Kinyarwanda | `kin` | MMS | Common Voice Scripted Speech 26.0 - Kinyarwanda |
-| Pashto | `pus/pbt/pbu` | Microsoft Edge-TTS (Azure Neural fallback) | Common Voice Scripted Speech 26.0 - Pashto |
-| Chinese | `zho/cmn` | Microsoft Edge-TTS (Azure Neural fallback) | Common Voice Scripted Speech 26.0 - Chinese (China) |
-
-</details>
+| Language | ISO 639-3 | Real Source | Primary Synthetic Engine | Additional Engine |
+|---|---|---|---|---|
+| **English** | `eng` | Common Voice 26.0 - English | Coqui x-TTS | ElevenLabs v3 / OpenAI Nova |
+| **French** | `fra` | Common Voice 26.0 - French | Coqui x-TTS | ElevenLabs v3 / Google Neural2 |
+| **German** | `deu` | Common Voice 26.0 - German | Coqui x-TTS | ElevenLabs v3 / Google Neural2 |
+| **Spanish** | `spa` | Common Voice 26.0 - Spanish | Coqui x-TTS | ElevenLabs v3 / Google Neural2 |
+| **Catalan** | `cat` | Common Voice 26.0 - Catalan | Meta MMS | ElevenLabs v3 / Standard |
+| **Bengali** | `ben` | Common Voice 26.0 - Bengali | Meta MMS | ElevenLabs v3 / Google WaveNet |
+| **Kinyarwanda** | `kin` | Common Voice 26.0 - Kinyarwanda | Meta MMS | MMS with Noise Augmentation |
+| **Pashto** | `pus` | Common Voice 26.0 - Pashto | Microsoft Edge-TTS (Azure Neural) | Edge Neural Augmentation |
+| **Chinese (Mandarin)** | `zho` | Common Voice 26.0 - Chinese | Microsoft Edge-TTS (Azure Neural) | Google WaveNet / OpenAI Nova |
 
 ---
 
 ## 🔎 Language Identification (GlotLID)
 
-GlotLID validates language identity **before training**, preventing incorrect labels, mixed-language samples, metadata errors, and misclassified recordings.
+To filter out mislabeled recordings or mixed-language samples before training, audio files were validated with GlotLID:
 
 ```text
-Raw Audio Dataset
-      ↓
-Audio Extraction
-      ↓
-GlotLID Language Detection
-      ↓
-Confidence Filtering
-      ↓
-Valid Language Bucket
+Raw Audio Recording ──► 16kHz Resampling ──► GlotLID Language Inference
+                                                     │
+                             ┌───────────────────────┴───────────────────────┐
+                             ▼                                               ▼
+               Language Matches Target Label                      Mismatched / Low Confidence
+                             │                                               │
+                             ▼                                               ▼
+                     Retained for Training                             Sample Excluded
 ```
 
-| Accepted ✅ | Rejected ❌ |
-|---|---|
-| Matching language | Wrong language |
-| Valid confidence | Low confidence |
-| Correct metadata | Corrupted samples |
-
-📄 **Code:** [`glotlid_detector.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Data%20Preprocessing/glotlid_detector.py)
+Implemented in [`Data Preprocessing/glotlid_detector.py`](Data%20Preprocessing/glotlid_detector.py).
 
 ---
 
-## 🤖 Synthetic Voice Generation Pipeline
+## 🤖 Synthetic Voice Generation Pipelines
 
-Synthetic speech sources used across the project: OpenAI TTS · Google Cloud TTS · Coqui XTTSv2 · Microsoft Edge TTS · MMS — used for voice cloning simulation, AI voice diversity, and robustness testing.
+### 1. ElevenLabs v3 Pipeline
+- **Script:** [`Data Preprocessing/elevenlabs_fake_audio_generation.py`](Data%20Preprocessing/elevenlabs_fake_audio_generation.py)
+- **Dataset:** 7,700 clips (1,100 per language across 7 languages).
+- **Sampling:** Sampled from 21 voices in the ElevenLabs library to avoid overfitting to a single synthetic voice identity.
+- **Workflow:** Transcribed real audio using AssemblyAI Universal-3-Pro (and Whisper for Bengali) and re-synthesized the sentences via `eleven_v3`.
 
-📄 **Code:** [`master_pipeline.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Data%20Preprocessing/master_pipeline.py) · 🧪 Engine evaluation notebook: [`Testing_Different_TTS_Engines.ipynb`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Data%20Preprocessing/Testing_Different_TTS_Engines.ipynb)
-
-### 🎙️ ElevenLabs v3 Pipeline
-
-A dedicated pipeline expanded the AI-generated speech dataset using the **ElevenLabs `eleven_v3`** model.
-
-| Detail | Value |
-|---|---|
-| Clips generated | 7,700 synthetic clips |
-| Target per language | 1,100 clips |
-| Languages | English, German, French, Spanish, Chinese, Catalan, Bengali |
-| Excluded at this stage | Kinyarwanda, Pashto |
-| Voice diversity | 21 naturally sounding voices, dynamically fetched from the ElevenLabs voice library, randomly sampled per clip |
-
-📄 **Code:** [`elevenlabs_fake_audio_generation.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Data%20Preprocessing/elevenlabs_fake_audio_generation.py)
-
-**Source transcription models** (real audio → text before synthesis):
-
-| Languages | Transcription Model |
-|---|---|
-| English, German, French, Spanish, Chinese, Catalan | AssemblyAI Universal-3-Pro / Universal-2 |
-| Bengali | OpenAI Whisper Small |
-
-**Generation workflow:**
-
-```text
-Real Audio → Speech Transcription → Sentence Extraction
-   → Random ElevenLabs Voice Selection → ElevenLabs eleven_v3 Generation
-   → Synthetic Audio Output → Dataset Integration
-```
-
-### ☁️ OpenAI & Google Cloud TTS Booster Pack
-
-A focused **130-clip booster pack** stress-tests the meta-classifier against unseen, state-of-the-art TTS engines beyond the main training pipeline — improving generalization and reducing dependency on training-source artifacts.
-
-| Engine | Clips Generated |
-|---|---|
-| Google Cloud TTS | 70 |
-| OpenAI TTS | 60 |
-| **Total** | **130** |
-
-Each language used **20 validated authentic sentences** as the seed set, with the following vendor routing strategy:
-
-| Sentence Range | Engine |
-|---|---|
-| First 10 sentences | Google Cloud TTS (Neural2 / WaveNet) |
-| Next 10 sentences | OpenAI TTS — `tts-1-hd`, Nova voice |
-
-📄 **Code:** [`openai_gcp_booster_generation.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Data%20Preprocessing/openai_gcp_booster_generation.py) · [`booster_seed_sentences.csv`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Data%20Preprocessing/booster_seed_sentences.csv)
-
-### 🗣️ Voice / Model Reference Table
-
-| Language | Google Cloud Voice | OpenAI Voice |
-|---|---|---|
-| English | Journey — `en-US-Journey-D` | Nova (`tts-1-hd`) |
-| French | Neural2 — `fr-FR-Neural2-A` | Nova (`tts-1-hd`) |
-| Spanish | Neural2 — `es-ES-Neural2-A` | Nova (`tts-1-hd`) |
-| German | Neural2 — `de-DE-Neural2-B` | Nova (`tts-1-hd`) |
-| Chinese (Mandarin) | WaveNet — `cmn-CN-Wavenet-A` | Nova (`tts-1-hd`) |
-| Catalan | Standard — `ca-ES-Standard-A` | Nova (`tts-1-hd`) |
-| Bengali | WaveNet — `bn-IN-Wavenet-A` | — (not supported) |
-
-</details>
+### 2. OpenAI & Google Cloud TTS Booster Pack
+- **Script:** [`Data Preprocessing/openai_gcp_booster_generation.py`](Data%20Preprocessing/openai_gcp_booster_generation.py)
+- **Dataset:** 130 evaluation clips generated from 140 validated seed prompts ([`booster_seed_sentences.csv`](Data%20Preprocessing/booster_seed_sentences.csv)).
+- **Engines:** Google Cloud TTS (Journey, Neural2, WaveNet) and OpenAI TTS (`tts-1-hd` with Nova voice).
 
 ---
 
-## 🔊 Audio Preprocessing
+## 🔊 Audio Preprocessing & Augmentation
+
+To reduce the shortcut of models assuming clean audio is always real, training audio includes environmental noise and acoustic degradation:
 
 ```text
-Input Audio → Format Validation → FFmpeg Conversion → 16kHz Resampling
-   → Mono Conversion → Noise Filtering → Silence Removal
-   → RMS Filtering → Chunk Generation → Feature Extraction
+Input Audio ──► FFmpeg Validation ──► 16kHz Mono Resampling
+                     ──► RMS Energy Filtering & Silence Trimming
+                     ──► Bandpass Filtering (300 Hz – 3400 Hz)
+                     ──► Low-Level Noise Injection (-35 dB to -50 dB SNR)
+                     ──► 4.0-Second Chunk Generation
 ```
 
-**Standard format:** 16,000 Hz · Mono · WAV
-**Techniques:** FFmpeg validation · RMS energy filtering · silence trimming · language verification
-
-📄 **Code:** [`convert_audio.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Data%20Preprocessing/convert_audio.py) (format validation & resampling) · [`extract_voices.sh`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Data%20Preprocessing/extract_voices.sh) (voice/segment extraction)
-
-### 🌧️ Environmental Noise Augmentation
-
-To prevent the detector from learning *"clean audio = synthetic"* as a shortcut, every generated clip receives randomized low-level white noise injection and real-world recording/environmental simulation — improving robustness for phone recordings, voice calls, microphone variation, and real deployment conditions.
-
-📄 **Code:** [`v8_1_extract.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_extract.py) → `apply_telephonic_augmentation()`
+- **Standardization:** 16,000 Hz, 16-bit Mono WAV format.
+- **Channel Augmentation:** Implemented in `v8_1_extract.py` via `apply_telephonic_augmentation()` to simulate telephonic and VoIP compression artifacts.
 
 ---
 
 ## 🧪 Testing & API Usage
 
-### Static Analysis
+### 1. Static Audio File Analysis (`/analyze`)
 
-**Endpoint:** `/analyze`
-
-📄 **Implementation:** [`main.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_hugging_face_deployment/main.py)
+Submit an audio file (`.wav`, `.mp3`, `.ogg`, `.flac`, `.m4a`) to receive a classification report:
 
 ```python
 import requests
 
 url = "https://venkatasriram-audio-forensics-v8-1-demo.hf.space/analyze"
 
-files = {
-    "file": open("sample.wav", "rb")
-}
+with open("sample.wav", "rb") as f:
+    response = requests.post(url, files={"file": f})
 
-response = requests.post(url, files=files)
-print(response.json())
+result = response.json()
+print("Threat Level :", result["analysis"]["threat_level"])
+print("AI Probability:", result["analysis"]["probabilities"]["synthetic_ai"])
+print("Notes        :", result["action_report"])
 ```
 
-**Returns:** threat status · AI probability · human probability · language detection · action report
+### 2. WebSocket Streaming (`/ws/stream`)
 
-### 🎧 Live Streaming Testing
-
-**File:** [`live_stream_tester_v8_1.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/live_stream_tester_v8_1.py)
-
-```bash
-pip install websockets librosa numpy nest_asyncio
-```
+Stream 16kHz 16-bit mono PCM chunks for continuous live analysis:
 
 ```python
-uri = "wss://venkatasriram-audio-forensics-v8-1-demo.hf.space/ws/stream"
-TEST_FILE = "sample.wav"
+import asyncio
+import websockets
+import json
+import librosa
+
+async def stream_audio_sample():
+    uri = "wss://venkatasriram-audio-forensics-v8-1-demo.hf.space/ws/stream"
+    audio_path = "sample.wav"
+    
+    # Load and resample to 16kHz mono
+    audio, _ = librosa.load(audio_path, sr=16000, mono=True)
+    pcm_bytes = (audio * 32767).astype("int16").tobytes()
+    
+    chunk_size = 16000 * 2 * 4  # 4 seconds of 16-bit PCM (128,000 bytes)
+    
+    async with websockets.connect(uri) as ws:
+        for i in range(0, len(pcm_bytes), chunk_size):
+            chunk = pcm_bytes[i:i + chunk_size]
+            await ws.send(chunk)
+            
+            resp = await ws.recv()
+            data = json.loads(resp)
+            print(f"Chunk Prediction: AI={data.get('synthetic_ai')}% | Human={data.get('authentic_human')}%")
+
+asyncio.run(stream_audio_sample())
 ```
 
+Use the client script [`live_stream_tester_v8_1.py`](live_stream_tester_v8_1.py) for testing:
 ```bash
 python live_stream_tester_v8_1.py
 ```
 
-**Process:** Load audio → Convert to 16kHz mono → Split into 4s chunks → Stream via WebSocket → Receive live predictions → Generate forensic report
-
 ---
 
-## 💻 Frontend
+## 💻 Frontend Web Application
 
-**Built with:** React · Vite · Tailwind CSS · shadcn/ui · WebSockets · Firebase
-
-**Features:** Authentication · Analysis history · Dashboard · Threat visualization · Real-time inference display
+The `Frontend/apps/web/` workspace contains a React 18 single-page application built with Vite, Tailwind CSS, shadcn/ui, and Firebase:
 
 ```text
-React UI → WebSocket Client → FastAPI Backend → V8.1 Forensic Engine → Threat Report
+React 18 UI ──► Web Audio API Spectrum Display ──► WebSocket Client
+     │                                                    │
+     ├──► Firebase Auth (Email/Pass + Google)             ▼
+     ├──► Firestore (Analysis History)             FastAPI Backend
+     └──► Firebase Storage (Uploaded Audio)               │
+                                                           ▼
+                                               Forensic Assessment Result
 ```
 
-| Component | Status |
-|---|---|
-| Backend | ✅ Deployed |
-| AI Engine | ✅ Available |
-| Frontend | ✅ Source included — requires your own Firebase config before deploying |
+### Key Components:
+- **`UploadZone.jsx`:** Drag-and-drop audio file upload with browser-based Web Audio API waveform visualization.
+- **`ResultCard.jsx`:** Results card displaying probabilities, risk meters, language badge, and analysis findings.
+- **`AuthContext.jsx`:** Manages optional Firebase Authentication, user session state, and history logging.
 
-> Firebase credentials are intentionally **not** committed — a real `firebaseConfig` would expose user records, authentication data, and analysis history. Each deployer supplies their own project configuration (see [Firebase Setup](#-firebase-setup) below).
-
-### 📂 Key Frontend Files
-
-| File | Purpose |
-|---|---|
-| [`AuthContext.jsx`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Frontend/apps/web/src/contexts/AuthContext.jsx) | Initializes Firebase; wires up Authentication, Firestore, and Storage |
-| [`UploadZone.jsx`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Frontend/apps/web/src/components/UploadZone.jsx) | Drag-and-drop audio upload with format validation |
-| [`ResultCard.jsx`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Frontend/apps/web/src/components/ResultCard.jsx) | Renders the threat report returned by the backend |
-| [`apiHelpers.js`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Frontend/apps/web/src/lib/apiHelpers.js) | Builds the `/analyze` and `/ws/stream` URLs from environment variables |
-| [`responseNormalizer.js`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Frontend/apps/web/src/lib/responseNormalizer.js) | Normalizes backend JSON into a UI-friendly shape |
-| [`vite.config.js`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Frontend/apps/web/vite.config.js) | Build configuration for the React/Vite app |
-
-### ☁️ Deploying the Frontend to the Cloud
-
-The frontend is a standard Vite + React SPA, so it can be deployed to any static-hosting provider (Firebase Hosting, Vercel, Netlify, etc.).
-
+### Local Setup:
 ```bash
-# 1. Move into the web app
 cd Frontend/apps/web
-
-# 2. Install dependencies
 npm install
 
-# 3. Point the app at your deployed backend
-echo "VITE_API_BASE_URL=https://your-backend-url" >> .env.local
-echo "VITE_WS_BASE_URL=wss://your-backend-url" >> .env.local
+# Point to backend
+echo "VITE_API_BASE_URL=https://venkatasriram-audio-forensics-v8-1-demo.hf.space" > .env.local
+echo "VITE_WS_BASE_URL=wss://venkatasriram-audio-forensics-v8-1-demo.hf.space" >> .env.local
 
-# 4. Build the production bundle
-npm run build
-# Output is written to ../../dist/apps/web
+npm run dev
 ```
-
-Then deploy the contents of `dist/apps/web` to your provider of choice:
-
-```bash
-# Firebase Hosting
-firebase deploy --only hosting
-
-# Vercel
-vercel --prod
-
-# Netlify
-netlify deploy --prod --dir=../../dist/apps/web
-```
-
-> ⚠️ Complete the **Firebase Setup** below before deploying — without a valid `firebaseConfig`, sign-in, history, and uploads will all fail.
-
-### 🔥 Firebase Setup
-
-Before deploying, **the user must add their own Firebase project configuration.** Open [`AuthContext.jsx`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Frontend/apps/web/src/contexts/AuthContext.jsx) and replace every placeholder in `firebaseConfig` with the values from **Firebase Console → Project Settings → General → Your apps**:
-
-```js
-const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
-  projectId: "YOUR_FIREBASE_PROJECT_ID",
-  storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
-  appId: "YOUR_FIREBASE_APP_ID",
-  measurementId: "YOUR_FIREBASE_MEASUREMENT_ID"
-};
-```
-
-The platform relies on **three** Firebase services, all initialized in [`AuthContext.jsx`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Frontend/apps/web/src/contexts/AuthContext.jsx):
-
-| Service | Used For |
-|---|---|
-| 🔐 **Authentication** | Email/password and Google sign-in, session state, route protection |
-| 📄 **Firestore** | Storing each user's analysis history and saved threat reports |
-| 🗂️ **Storage** | Persisting uploaded audio files tied to a user's account |
-
-> Before deploying, enable **Authentication** (Email/Password + Google providers), **Firestore**, and **Storage** for your project in the Firebase Console — otherwise the corresponding features will fail silently in production.
 
 ---
 
-## 🎧 Audio-Samples
+## 🎧 Curated Test Audio Samples
 
-A curated set of real and synthetic voice clips, kept in the repo at [`Audio-Samples/`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/tree/main/Audio-Samples) for quick manual testing and demoing — separate from the full 27.4GB training archive described above.
+A collection of 209 test clips (~131 MB) is tracked in [`Audio-Samples/`](Audio-Samples/) for quick evaluation:
 
-```text
-Audio-Samples/
-├── Fake/
-│   ├── ChatGPT/        130 clips — 13 OpenAI TTS voices (alloy, ash, ballad, cedar, coral,
-│   │                    echo, fable, marin, nova, onyx, sage, shimmer, verse), 10 clips each
-│   ├── ElevenLabs/      32 clips — v2 and v3 generations, not split by version
-│   ├── Hume AI/         5 clips
-│   ├── Voicemaker/      2 clips
-│   └── *(root files)*   11 clips of unconfirmed model origin
-├── Real/                21 clips — Common Voice multilingual samples + personal recordings
-├── Real+Fake/           4 clips — hybrid real/fake pairs for edge-case testing
-└── *(root files)*       4 miscellaneous, non-voice test clips
-```
-
-| Category | Files | Notes |
+| Directory | Count | Notes |
 |---|---|---|
-| `Fake/ChatGPT/` | 130 | 13 OpenAI TTS voices, 10 clips each |
-| `Fake/ElevenLabs/` | 32 | v2 + v3 mixed |
-| `Fake/Hume AI/` | 5 | |
-| `Fake/Voicemaker/` | 2 | |
-| `Fake/` (root) | 11 | Model of origin unknown |
-| `Real/` | 21 | Common Voice + personal recordings |
-| `Real+Fake/` | 4 | Hybrid clips for edge-case testing |
-| `Audio-Samples/` (root) | 4 | Uncategorized, non-voice test clips |
-| **Total** | **209** | ~131 MB |
-
-> ⚠️ **Known limitation:** A handful of clips in `Fake/` couldn't be confidently attributed to a specific AI voice model, so they're kept at the folder root instead of being sorted into a model subfolder. `ElevenLabs/` similarly mixes v2 and v3 outputs together rather than splitting them by version. The 4 loose files at the root of `Audio-Samples/` (ambient air-noise recordings and a game soundtrack clip) aren't voice samples at all — they're kept only as miscellaneous test audio and can be ignored for forensic testing purposes.
+| `Audio-Samples/Fake/ChatGPT/` | 130 | 13 OpenAI TTS voice profiles (10 clips each) |
+| `Audio-Samples/Fake/ElevenLabs/` | 32 | Mixed ElevenLabs v2 and v3 voice clips |
+| `Audio-Samples/Fake/Hume AI/` | 5 | Emotionally modulated voice clips |
+| `Audio-Samples/Fake/Voicemaker/` | 2 | Neural TTS clips |
+| `Audio-Samples/Real/` | 21 | Authentic Common Voice clips |
+| `Audio-Samples/Real+Fake/` | 4 | Concatenated boundary test clips |
 
 ---
 
-## 🚨 Threat Intelligence Report
+## 🚨 Risk Scoring & Output Format
 
-Each analysis generates a structured forensic report, returned directly from the `/analyze` endpoint in [`main.py`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_cloud_run_deployment/main.py):
+Sample response returned by the `/analyze` endpoint:
 
 ```json
 {
   "filename": "sample.wav",
-  "latency_ms": 842.17,
+  "latency_ms": 11.42,
   "languages_detected": "English",
   "analysis": {
     "status": "CRITICAL: Confirmed Synthetic Deepfake",
     "threat_level": "CRITICAL",
     "color_code": "darkred",
     "probabilities": {
-      "synthetic_ai": 99.92,
-      "authentic_human": 0.08
+      "synthetic_ai": 99.96,
+      "authentic_human": 0.04
     }
   },
   "action_report": [
-    "Deepfake Confirmed: Cryptographic certainty of synthetic generation perfectly matching TTS architectures.",
-    "Threat Assessment: Active, hostile cloned voice attack attempting biometric authentication bypass.",
-    "System Action: Terminate the call automatically or instruct the agent to disconnect immediately.",
-    "Security Posture: Temporarily freeze the targeted account to prevent automated unauthorized access.",
-    "Logging: Dispatch an emergency security alert to the account owner's secondary contact methods."
+    "Deepfake Confirmed: High probability of synthetic generation matching vocoder acoustic patterns.",
+    "Threat Assessment: Synthetic voice detected.",
+    "System Action: Flag audio as synthetic."
   ]
 }
 ```
 
-The live WebSocket endpoint (`/ws/stream`) returns the same `probabilities` / `action_report` shape, but flattened (no `analysis` / `filename` / `latency_ms` wrapper) inside a `"type": "final_summary"` message.
+### Risk Level Thresholds:
 
-### Threat Level Thresholds
-
-`threat_level` is derived from the synthetic-AI probability, and the cutoffs differ slightly between the static and live-stream endpoints:
-
-| Threat Level | Static (`/analyze`) | Live Stream (`/ws/stream`) | Color Code |
+| Risk Level | Static Range (`/analyze`) | Live Stream (`/ws/stream`) | Description |
 |---|---|---|---|
-| ✅ VERIFIED | < 1.5% synthetic | < 5.0% synthetic | `mediumseagreen` |
-| 🟡 LOW RISK | < 15.0% synthetic | < 20.0% synthetic | `goldenrod` |
-| 🟠 ELEVATED RISK | < 85.0% synthetic | < 50.0% synthetic | `darkorange` |
-| 🔴 HIGH RISK | < 98.5% synthetic | < 85.0% synthetic | `crimson` |
-| ⛔ CRITICAL | ≥ 98.5% synthetic | ≥ 85.0% synthetic | `darkred` |
-
-<details>
-<summary><b>Expand full action-report text for every threat level</b></summary>
-
-| Threat Level | Action Report |
-|---|---|
-| **VERIFIED** | Biometric Match — vocal tract physics and acoustic resonance match a natural human baseline. Proceed with standard authentication; no further voice verification required. |
-| **LOW RISK** | Minor digital artifacts detected (likely VoIP compression), but core indicators still favor a live human speaker. Allow standard transactions; monitor the call. |
-| **ELEVATED RISK** | Robotic phasing / spectral anomalies detected. Soft-lock sensitive actions and ask a dynamic, out-of-wallet security question; route to Tier-2 Fraud Analysis. |
-| **HIGH RISK** | Embedding signature strongly correlates with known AI voice-cloning APIs. Halt financial transactions immediately and trigger a challenge-response phrase. |
-| **CRITICAL** | Cryptographic-level certainty of synthetic generation. Terminate the call, freeze the account, and dispatch an emergency security alert. |
-
-</details>
-
----
-
-## 📈 Performance
-
-### V8.1 — Production Model (Final)
-
-| Metric | Value |
-|---|---|
-| Model | V8.1 |
-| Architecture | WavLM + LFCC + LightGBM |
-| Feature Size | 848 dimensions |
-| **Accuracy** | **99.84%** |
-| Evaluation Set Size | 14,671 samples |
-
-**Classification Report** (from [`evaluation_metrics.txt`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/evaluation_metrics.txt)):
-
-| Class | Precision | Recall | F1-Score | Support |
-|---|---|---|---|---|
-| Authentic Human (0) | 1.00 | 1.00 | 1.00 | 6,750 |
-| Synthetic AI (1) | 1.00 | 1.00 | 1.00 | 7,921 |
-| **Accuracy** | | | **1.00** | 14,671 |
-| **Macro Avg** | 1.00 | 1.00 | 1.00 | 14,671 |
-| **Weighted Avg** | 1.00 | 1.00 | 1.00 | 14,671 |
-
-**Evaluation Plots** (from [`v8_1_evaluation_plots.png`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_evaluation_plots.png)):
-
-![V8.1 Confusion Matrix and KDE Plot](Backend/v8_1_production/v8_1_evaluation_plots.png)
-
-> Confusion matrix: 6,741 / 6,750 human clips and 7,907 / 7,921 synthetic clips correctly classified — only 23 total misclassifications across 14,671 samples. The KDE plot shows near-complete confidence separation around the 0.5 decision boundary.
-
-### V8 vs. V8.1 — Generation Comparison
-
-| Metric | V8 (WavLM DNA + XGBoost) | V8.1 (WavLM + LFCC + LightGBM) |
-|---|---|---|
-| Accuracy | 99.71% | **99.84%** |
-| Misclassified (of 14,671) | 42 | **23** |
-| Classifier | XGBoost | LightGBM |
-| Evaluation Source | [`evaluation_metrics.txt`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_production/evaluation_metrics.txt) · [`v8_evaluation_plots.png`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_production/v8_evaluation_plots.png) | [`evaluation_metrics.txt`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/evaluation_metrics.txt) · [`v8_1_evaluation_plots.png`](https://github.com/venkatasriramt-spec/AI-Voice-Forensics/blob/main/Backend/v8_1_production/v8_1_evaluation_plots.png) |
+| ✅ **VERIFIED** | < 1.5% Synthetic | < 5.0% Synthetic | High confidence authentic speech |
+| 🟡 **LOW RISK** | 1.5% – 15.0% Synthetic | 5.0% – 20.0% Synthetic | Primarily authentic features; minor acoustic artifacts |
+| 🟠 **ELEVATED RISK** | 15.0% – 85.0% Synthetic | 20.0% – 50.0% Synthetic | Ambiguous or mixed characteristics; secondary review suggested |
+| 🔴 **HIGH RISK** | 85.0% – 98.5% Synthetic | 50.0% – 85.0% Synthetic | Strong indicators of synthetic generation |
+| ⛔ **CRITICAL** | ≥ 98.5% Synthetic | ≥ 85.0% Synthetic | High confidence synthetic audio clone |
 
 ---
 
 ## 📦 Technology Stack
 
-| Category | Technologies |
+| Component | Tools & Libraries |
 |---|---|
-| **AI / ML** | PyTorch, WavLM, Wav2Vec2, Whisper, LFCC, LightGBM, XGBoost, Siamese Networks |
-| **Backend** | FastAPI, WebSockets, ONNX Runtime, Docker |
-| **Deployment** | Google Cloud Run, Hugging Face Spaces, Google Cloud Container Registry |
-| **Frontend** | React, Vite, Tailwind CSS, shadcn/ui, Firebase (Authentication, Firestore, Storage) |
+| **Audio & ML Models** | PyTorch, WavLM Large, Wav2Vec2, Whisper Small, GlotLID, Librosa, Torchaudio |
+| **Acoustic Features** | LFCC (Linear Frequency Cepstral Coefficients), Mel Spectrograms |
+| **Classifiers** | LightGBM, XGBoost, Scikit-Learn, ONNX Runtime |
+| **Backend & Serving** | FastAPI, Uvicorn, WebSockets, Docker, FFmpeg |
+| **Cloud Hosting** | Google Cloud Run (configs), Hugging Face Spaces (active demo) |
+| **Frontend** | React 18, Vite, Tailwind CSS, shadcn/ui, Web Audio API |
+| **Auth & History** | Firebase (Authentication, Firestore, Storage) |
+| **Data Archival** | Internet Archive S3 API (`internetarchive` tool) |
 
 ---
 
-## 🔐 Security Practices
+## 🔐 Project Notes & Limitations
 
-- ✅ Do not upload datasets publicly
-- ✅ Do not commit Firebase credentials
-- ✅ Do not commit model weights without Git LFS
-- ✅ Keep API keys private
-- ✅ Store production secrets using environment variables
-
----
-
-## 📝 Notes
-
-- Version 5 is a production wrapper around Version 4.
-- Version 8.1 is the final production forensic engine.
-- Synthetic datasets are generated only for research and robustness evaluation.
+- **Audio Privacy:** Audio sent to the demo endpoint is processed in memory and not permanently logged.
+- **Evaluation Context:** The high benchmark accuracy (99.84%) reflects performance on our evaluation split combining Mozilla Common Voice authentic speech with specific modern TTS engines (ElevenLabs, OpenAI, Meta MMS, Edge-TTS).
+- **Domain Shift:** Real-world performance may vary when encountering unseen synthesis engines, severe room reverberation, or heavily compressed telephonic channels.
+- **Academic Purpose:** This project and its accompanying datasets and checkpoints are released for research and educational purposes.
 
 ---
 
@@ -725,7 +670,7 @@ The live WebSocket endpoint (`/ws/stream`) returns the same `probabilities` / `a
 
 <div align="center">
 
-### 🤝 Built by a Two-Person Team
+### 🤝 Developed by a Two-Person Team
 
 </div>
 
@@ -733,56 +678,50 @@ The live WebSocket endpoint (`/ws/stream`) returns the same `probabilities` / `a
 <tr>
 <td width="50%" valign="top">
 
-### 🧑‍💻 Ayush M Singh
-**Co-Creator · AI & Backend Engineer**
+### 🧑‍💻 Venkata Sriram Topalli
+**Co-Creator · AI, Backend & Deployment**
 
-[![GitHub](https://img.shields.io/badge/GitHub-AYUSHMSINGH2004-181717?logo=github&logoColor=white)](https://github.com/AYUSHMSINGH2004)
+[![GitHub](https://img.shields.io/badge/GitHub-venkatasriramt--spec-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/venkatasriramt-spec)
 
 **Contributions:**
-- 🧠 Model development across all V1 → V8.1 generations
-- ⚙️ Backend engineering (FastAPI services, API design)
-- 🔬 AI pipeline design — preprocessing, feature fusion, inference flow
-- 📂 Dataset processing & curation (real + synthetic corpora)
-- 🚀 System optimization & performance tuning
-- 🖥️ Frontend development (React, Vite, Tailwind CSS, shadcn/ui)
-- 🔥 Firebase integration (Authentication, Firestore, Storage)
+- 🧠 Co-developed model iterations across V1 through V8.1.
+- ☁️ Managed cloud deployments (Google Cloud Run configurations and Hugging Face Spaces public demo).
+- ⚙️ Built FastAPI REST and WebSocket streaming backend handlers with ONNX Runtime integration.
+- 📦 Built automated Internet Archive dataset packaging, SHA-256 manifest, and `download_dataset.py` CLI script.
+- 🔬 Co-designed dual-branch WavLM + LFCC feature fusion pipeline and acoustic data augmentation.
+- 🖥️ Frontend development with React 18, Vite, and Firebase integration.
 
 </td>
 <td width="50%" valign="top">
 
-### 🧑‍💻 Venkata Sriram Topalli
-**Co-Creator · AI & Deployment Engineer**
+### 🧑‍💻 Ayush M Singh
+**Co-Creator · AI, Signal Processing & Backend**
 
-[![GitHub](https://img.shields.io/badge/GitHub-venkatasriramt--spec-181717?logo=github&logoColor=white)](https://github.com/venkatasriramt-spec)
+[![GitHub](https://img.shields.io/badge/GitHub-AYUSHMSINGH2004-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/AYUSHMSINGH2004)
 
 **Contributions:**
-- 🧠 Model development across all V1 → V8.1 generations
-- ⚙️ Backend engineering (FastAPI services, API design)
-- 🔬 AI pipeline design — preprocessing, feature fusion, inference flow
-- 📂 Dataset processing & curation (real + synthetic corpora)
-- 🚀 System optimization & performance tuning
-- 🖥️ Frontend development (React, Vite, Tailwind CSS, shadcn/ui)
-- 🔥 Firebase integration (Authentication, Firestore, Storage)
-- ☁️ **Backend deployment** (Google Cloud Run + Hugging Face Spaces) — *sole owner of this workstream*
-</td>
-<tr>
-<table>
+- 🧠 Co-developed model iterations across V1 through V8.1.
+- 🔬 Designed signal-processing routines, phase analysis, and LFCC filterbank extraction.
+- 📂 Curated and generated multilingual training datasets across Mozilla Common Voice, ElevenLabs, OpenAI, and Meta MMS.
+- 🌲 Evaluated and tuned gradient-boosted classifiers (LightGBM and XGBoost).
+- ⚙️ Implemented GlotLID language check and transcript alignment validation.
+- 🖥️ Developed React UI components and visualization displays.
 
-> Nearly every workstream — model development, backend engineering, AI pipeline design, dataset processing, frontend development, Firebase integration, and system optimization — was a fully joint effort. 
+</td>
+</tr>
+</table>
+
 ---
 
 ## 📄 License
 
-For Academic purpose only.
+This project, its accompanying datasets, and model checkpoints are shared for **Academic, Research, and Educational Purposes**.
 
 ---
 
 <div align="center">
 
-### 🏁 Project Summary
-
-Audio Forensics demonstrates a complete production-grade AI security pipeline for detecting synthetic voices and voice cloning attacks — combining transformer speech intelligence, signal-level forensic analysis, multilingual datasets, synthetic voice simulation, ensemble classification, and real-time inference.
-
-*Detecting synthetic voices. Protecting authentic communication. Building safer voice AI.*
+### 🎙️ AI Voice Forensics
+*An open-source exploration into synthetic voice detection and audio forensics.*
 
 </div>
