@@ -16,7 +16,7 @@ Modern neural text-to-speech (TTS) engines (such as ElevenLabs v3, OpenAI TTS, a
 - 🌲 **Gradient-Boosted Classifier:** A LightGBM classifier operating on the concatenated 848-D feature vector.
 - ⚡ **Dual Serving Modes:** Static file analysis via REST API and live audio chunk evaluation via WebSockets.
 
-Across an evaluation set of 14,671 audio recordings across 9 languages, the final V8.1 pipeline achieved **99.84% test accuracy** (23 misclassifications).
+Across a held-out test set of 14,671 audio recordings across 9 languages (clips strictly withheld from the model during training), the final V8.1 pipeline achieved **99.84% in-distribution test accuracy** (23 misclassifications).
 
 ---
 
@@ -231,7 +231,7 @@ The `Backend/` directory contains seven serving versions built during the projec
 - **Design:** Dual-branch feature fusion combining transformer embeddings with signal features.
 - **Features:** 848 dimensions (768 WavLM embeddings + 80 LFCC coefficients).
 - **Classifier:** LightGBM Booster (`v8_1_lightgbm.txt`), evaluated on CPU with multi-threading.
-- **Evaluation:** 99.84% accuracy across 14,671 out-of-sample clips.
+- **Evaluation:** 99.84% accuracy across 14,671 held-out test clips (in-distribution benchmark).
 - **Deployment:** Deployment configurations available for [Google Cloud Run](Backend/v8_1_production/v8_1_cloud_run_deployment/) and [Hugging Face Spaces](Backend/v8_1_production/v8_1_hugging_face_deployment/).
 
 #### 2. V8 Model
@@ -310,6 +310,22 @@ TOTAL ACCURACY: 99.84% (23 total errors across 14,671 samples)
 ```
 
 ![V8.1 Evaluation Plots](Backend/v8_1_production/v8_1_evaluation_plots.png)
+
+> [!IMPORTANT]
+> **Engineering Note on Test Accuracy & Out-of-Distribution (OOD) Generalization**
+> 
+> The **99.84% test accuracy** reported above was achieved on a **held-out 15% stratified test split** of 14,671 clips (evaluated in [`Backend/v8_1_production/v8_1_train.py`](Backend/v8_1_production/v8_1_train.py) from feature super-vectors extracted via [`Backend/v8_1_production/v8_1_extract.py`](Backend/v8_1_production/v8_1_extract.py)).
+> 
+> **Composition of the 14,671 Test Clips (Strictly Unseen During Training):**
+> - **6,750 Authentic Human Clips:** Held-out recordings from the Mozilla Common Voice v26.0 corpus across 9 languages.
+> - **7,921 Synthetic AI Clips:** Held-out recordings synthesized across our designated generator pipelines: Coqui XTTS-v2 (French, German, Spanish), Meta MMS-TTS (Catalan, Bengali, Kinyarwanda), Microsoft Edge-TTS (Chinese, Pashto), ElevenLabs v3 (multilingual top-ups), and OpenAI/GCP booster packs.
+> 
+> **Scientific Caveat:** While these test clips were never seen during LightGBM training, they remain **in-distribution** with respect to the source corpora and synthesis architectures. Therefore, **a 99.84% benchmark should not be considered an absolute defense against wild, adversarial scenarios**. Real-world deployment will encounter significant **Out-of-Distribution (OOD) variance**, such as:
+> - **Unseen Synthesis Models:** Modern neural voice cloners not present in the training corpus (e.g., Cartesia, Fish Audio, StyleTTS2, Bark, Tortoise).
+> - **Degraded Acoustic Channels:** Band-limited 8 kHz PSTN/GSM telephone lines, low-bitrate VoIP codecs (AMR, Opus), packet loss, and WhatsApp/social media recompression.
+> - **Conversational & Acoustic Variance:** Spontaneous colloquial speech, laughter, shouting, whispering, heavy reverberation, and noisy microphone hardware.
+> 
+> True production robustness requires continuous stress-testing against newly released TTS engines and wild, out-of-distribution recordings.
 
 ---
 
@@ -652,8 +668,8 @@ Sample response returned by the `/analyze` endpoint:
 ## 🔐 Project Notes & Limitations
 
 - **Audio Privacy:** Audio sent to the demo endpoint is processed in memory and not permanently logged.
-- **Evaluation Context:** The high benchmark accuracy (99.84%) reflects performance on our evaluation split combining Mozilla Common Voice authentic speech with specific modern TTS engines (ElevenLabs, OpenAI, Meta MMS, Edge-TTS).
-- **Domain Shift:** Real-world performance may vary when encountering unseen synthesis engines, severe room reverberation, or heavily compressed telephonic channels.
+- **In-Distribution vs. Out-of-Distribution (OOD):** The 99.84% test accuracy reflects performance on a held-out 15% evaluation split (14,671 clips) drawn from our curated corpus (Mozilla Common Voice authentic speech paired with XTTS-v2, Meta MMS, Edge-TTS, ElevenLabs v3, and OpenAI/GCP). It should not be defended as an absolute defense against wild or unrepresented synthesis architectures.
+- **Domain Shift:** Real-world detection reliability can be impacted by unseen neural voice cloners, severe room reverberation, and lossy telephonic channels (such as 8 kHz GSM/PSTN networks and VoIP packet drops).
 - **Academic Purpose:** This project and its accompanying datasets and checkpoints are released for research and educational purposes.
 
 ---
