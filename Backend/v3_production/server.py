@@ -10,7 +10,11 @@ import librosa
 
 BASE_DIR = Path(__file__).resolve().parent
 REPO_ROOT = BASE_DIR.parents[1]
-ONNX_MODEL_PATH = BASE_DIR / "thunderbuddies_v3.onnx"
+ONNX_MODEL_PATH = BASE_DIR / "v3_crnn.onnx"
+if not ONNX_MODEL_PATH.exists():
+    legacy_path = BASE_DIR / "thunderbuddies_v3.onnx"
+    if legacy_path.exists():
+        ONNX_MODEL_PATH = legacy_path
 
 app = FastAPI(title="Audio Forensics - Model V3 Inference Engine")
 
@@ -39,7 +43,7 @@ else:
 
 def process_chunk(audio_array, sr=16000):
     if onnx_session is None:
-        return {"error": "Model weight thunderbuddies_v3.onnx not found. Please place weights in Backend/v3_production/."}
+        return {"error": f"Model weight {ONNX_MODEL_PATH.name} not found. Please place weights in Backend/v3_production/."}
 
     # 1. Generate Spectrogram Data
     mel_spec = librosa.feature.melspectrogram(y=audio_array, sr=sr, n_mels=128, fmax=8000)

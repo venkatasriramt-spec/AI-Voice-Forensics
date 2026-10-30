@@ -77,7 +77,26 @@ def download_and_extract(pkg_key):
         tar.extractall(path=PROJECT_ROOT)
     
     print(f"✅ Extracted successfully into project structure.")
-    
+
+    # Ensure standard descriptive aliases for V1-V3 models if legacy archive names are extracted
+    if pkg_key == "models":
+        v3_dir = PROJECT_ROOT / "Backend" / "v3_production"
+        legacy_mappings = {
+            "thunderbuddies_v3.onnx": "v3_crnn.onnx",
+            "thunderbuddies_model_v3.pth": "v3_crnn_model.pth",
+            "thunderbuddies_model_v2.pth": "v2_crnn_model.pth",
+            "thunderbuddies_model.pth": "v1_crnn_model.pth",
+        }
+        for old_name, new_name in legacy_mappings.items():
+            old_file = v3_dir / old_name
+            new_file = v3_dir / new_name
+            if old_file.exists() and not new_file.exists():
+                try:
+                    new_file.symlink_to(old_file.name)
+                except Exception:
+                    import shutil
+                    shutil.copy2(old_file, new_file)
+
     # Remove archive file after extraction to save disk space
     if archive_path.exists():
         archive_path.unlink()

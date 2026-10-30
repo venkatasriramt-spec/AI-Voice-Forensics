@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy all your models and code into the container
-# (Make sure thunderbuddies_v4.json and wav2vec2_onnx_production/ are in the same folder!)
+# (Make sure v4_xgboost_wav2vec2.json and wav2vec2_onnx_production/ are in the same folder!)
 COPY . .
 
 # Expose the port the app runs on

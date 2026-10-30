@@ -78,10 +78,10 @@ AI-Voice-Forensics/
 ├── Backend/                                # Multi-generational backend serving engines
 │   ├── v3_production/                      # V3: Hybrid CRNN + ONNX inference service
 │   │   ├── server.py                       # FastAPI REST & WebSocket streaming server
-│   │   ├── thunderbuddies_v3.onnx          # Pretrained V3 ONNX inference graph (47.3 MB)
-│   │   ├── thunderbuddies_model_v3.pth     # PyTorch checkpoint (V3 epoch weights)
-│   │   ├── thunderbuddies_model_v2.pth     # PyTorch checkpoint (V2 epoch weights)
-│   │   └── thunderbuddies_model.pth        # PyTorch checkpoint (V1 epoch weights)
+│   │   ├── v3_crnn.onnx                    # Pretrained V3 ONNX inference graph (47.3 MB)
+│   │   ├── v3_crnn_model.pth               # PyTorch checkpoint (V3 epoch weights)
+│   │   ├── v2_crnn_model.pth               # PyTorch checkpoint (V2 epoch weights)
+│   │   └── v1_crnn_model.pth               # PyTorch checkpoint (V1 epoch weights)
 │   ├── v4_production/                      # V4: Transformer Wav2Vec2 + XGBoost engine
 │   │   ├── Dockerfile                      # Container definition with ffmpeg
 │   │   ├── main.py                         # FastAPI assessment API
@@ -226,7 +226,7 @@ The `Backend/` directory contains seven serving versions built during the projec
 
 | Version | Directory | Architecture | Typical Latency | Key Files |
 |---|---|---|---|---|
-| **V3** | [`Backend/v3_production/`](Backend/v3_production/) | Hybrid CRNN + ONNX | ~180 ms | [`server.py`](Backend/v3_production/server.py), `thunderbuddies_v3.onnx` (47 MB) |
+| **V3** | [`Backend/v3_production/`](Backend/v3_production/) | Hybrid CRNN + ONNX | ~180 ms | [`server.py`](Backend/v3_production/server.py), `v3_crnn.onnx` (47 MB) |
 | **V4** | [`Backend/v4_production/`](Backend/v4_production/) | Wav2Vec2 (ONNX) + Whisper + XGBoost | ~120 ms | [`main.py`](Backend/v4_production/main.py), `v4_xgboost_wav2vec2.json`, `model.onnx` (360 MB) |
 | **V5** | [`Backend/v5_production/`](Backend/v5_production/) | Streaming Microservice Wrapper | ~95 ms | [`main.py`](Backend/v5_production/main.py), [`stream_tester_v5.py`](Backend/v5_production/stream_tester_v5.py) |
 | **V6** | [`Backend/v6_production/`](Backend/v6_production/) | 60-D LFCC + Wav2Vec2 + XGBoost | ~85 ms | [`main.py`](Backend/v6_production/main.py), `v6_xgboost_grand_classifier.json`, [`v6_train.py`](Backend/v6_production/v6_train.py) |
@@ -261,7 +261,7 @@ The `Backend/` directory contains seven serving versions built during the projec
 - **Design:** Transitioned from 2D spectrogram representations to 1D speech representations via Wav2Vec2 (exported to ONNX for lower latency) paired with XGBoost. V5 added an asynchronous WebSocket chunking server.
 
 #### 6. V3 Model
-- **Design:** Convolutional Recurrent Neural Network (CRNN) using Mel-Spectrogram arrays, served through ONNX Runtime (`thunderbuddies_v3.onnx`).
+- **Design:** Convolutional Recurrent Neural Network (CRNN) using Mel-Spectrogram arrays, served through ONNX Runtime (`v3_crnn.onnx`).
 
 ---
 
@@ -383,7 +383,7 @@ The training data, precomputed feature tensors, and model weights (~24 GB uncomp
 
 | Archive Name | Target Folder | Compressed Size | Uncompressed | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| **`heavy_model_weights.tar.gz`** | `Backend/**` | **716.1 MB** | ~910 MB | Pretrained ONNX & PyTorch weights (`thunderbuddies_v3.onnx`, `model.onnx`, `wavlm_siamese_v7.pth`, `thunderbuddies_model_v3.pth`) |
+| **`heavy_model_weights.tar.gz`** | `Backend/**` | **716.1 MB** | ~910 MB | Pretrained ONNX & PyTorch weights (`v3_crnn.onnx`, `model.onnx`, `wavlm_siamese_v7.pth`, `v3_crnn_model.pth` — archive also retains legacy aliases `thunderbuddies_v3.onnx` / `thunderbuddies_model_v3.pth`) |
 | **`dna_feature_caches.tar.gz`** | `cache/` | **1,008.0 MB** | ~2.3 GB | Precomputed 768-D WavLM DNA & 848-D Fused WavLM+LFCC latent tensors for training without GPU |
 | **`elevenlabs_v3_synthetic_speech.tar.gz`** | `data/elevenlabs_v3_synthetic_speech/` | **443.9 MB** | ~467 MB | 7,700 dynamic ElevenLabs v3 clips sampled across 21 voices and 7 languages |
 | **`openai_gcp_booster_pack.tar.gz`** | `data/openai_gcp_booster_pack/` | **8.4 MB** | ~12 MB | 130 Neural2 / Journey / Nova clips with micro-noise injection |
