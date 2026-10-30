@@ -220,7 +220,8 @@ flowchart TD
 
 ---
 
-## ⚙️ Backend Engines (V3 – V8.1)
+<a id="backend-engines-v3--v81"></a>
+## ⚙ Backend Engines (V3 – V8.1)
 
 The `Backend/` directory contains seven serving versions built during the project:
 
@@ -322,7 +323,8 @@ TOTAL ACCURACY: 99.84% (23 total errors across 14,671 samples)
 
 ---
 
-## 🛠️ Model Training & Feature Extraction
+<a id="model-training--feature-extraction"></a>
+## 🛠 Model Training & Feature Extraction
 
 Each model generation in `Backend/` is self-contained with its own feature extraction, training, and testing scripts:
 
